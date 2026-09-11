@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Reservá tu cancha de fútbol 5, 7 u 11 en El Potrero. Canchas techadas y al aire libre con iluminación LED profesional de estadio, vestuarios, buffet y el mejor tercer tiempo.">
+  <meta name="keywords" content="canchas de futbol, reserva de canchas, futbol 5, futbol 7, futbol 11, potrero, buenos aires, alquiler cancha">
+  <meta name="theme-color" content="#133A22">
+  <meta property="og:title" content="El Potrero | Fútbol bajo los Reflectores">
+  <meta property="og:description" content="El predio futbolero de barrio. Canchas techadas y descubiertas de F5, F7 y F11 con reflectores LED y reserva al instante.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_AR">
+  <title>El Potrero | Reserva de Canchas de Fútbol 5, 7 y 11</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <!-- Google Fonts: Bebas Neue e Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Estilos Globales -->
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <!-- Accesibilidad: Saltar al contenido -->
+  <a href="#contenido-principal" class="skip-link">Saltar al contenido principal</a>
+
+  <!-- Encabezado Principal -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand-logo" aria-label="El Potrero - Inicio">
+        <div class="brand-icon" aria-hidden="true">⚽</div>
+        <div class="brand-text">
+          <span class="brand-name">EL POTRERO</span>
+          <span class="brand-tagline">Club de Fútbol • Noche & Pasión</span>
+        </div>
+      </a>
+
+      <div class="header-status" aria-label="Estado del predio">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span>Predio Abierto • 14:00 a 00:00</span>
+      </div>
+
+      <nav class="header-actions" aria-label="Navegación principal">
+        <a href="#nuestras-canchas" class="btn btn-secondary nav-canchas-link">Canchas</a>
+        <a href="reservar.html" class="btn btn-primary" id="btn-header-reservar">RESERVAR CANCHA</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido-principal">
+    <!-- Hero Section -->
+    <section class="hero-section" aria-labelledby="hero-title">
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <div class="hero-badge">
+              <span>★</span> PREDIO DE FÚTBOL ILUMINADO • 6 CANCHAS
+            </div>
+            <h1 id="hero-title" class="hero-title">
+              FÚTBOL BAJO <span>LOS REFLECTORES</span>
+            </h1>
+            <p class="hero-description">
+              El club de barrio donde la pelota siempre rueda limpia. Seis canchas reglamentarias de 
+              Fútbol 5, 7 y 11 con césped sintético y natural de alto rendimiento, reflectores LED 
+              nivel estadio, vestuarios impecables y el mejor tercer tiempo en la parrilla.
+            </p>
+            <div class="hero-actions">
+              <a href="reservar.html" class="btn btn-primary" style="font-size: 1.4rem; padding: 0.85rem 2rem;">
+                RESERVAR TURNO ONLINE
+              </a>
+              <a href="#nuestras-canchas" class="btn btn-secondary">
+                CONOCER LAS CANCHAS
+              </a>
+            </div>
+          </div>
+
+          <!-- Marcador Oficial en Vivo -->
+          <div>
+            <div class="scoreboard-box" aria-label="Información rápida del predio">
+              <div class="scoreboard-header">
+                <span>ESTADO DE INSTALACIONES</span>
+                <span style="color: #5CDB95;">● OPERATIVO</span>
+              </div>
+              <div class="scoreboard-stats">
+                <div>
+                  <div class="scoreboard-stat-val">06</div>
+                  <div class="scoreboard-stat-lbl">Canchas Pro</div>
+                </div>
+                <div>
+                  <div class="scoreboard-stat-val">100%</div>
+                  <div class="scoreboard-stat-lbl">LED Estadio</div>
+                </div>
+                <div>
+                  <div class="scoreboard-stat-val">60'</div>
+                  <div class="scoreboard-stat-lbl">Por Turno</div>
+                </div>
+              </div>
+
+              <div class="chalk-line-h" style="margin: 1.25rem 0;"></div>
+
+              <div style="font-size: 0.85rem; color: var(--chalk-dim); display: flex; flex-direction: column; gap: 0.4rem;">
+                <div>📍 <strong>Ubicación:</strong> Av. del Fútbol 1986, Barrio Parque</div>
+                <div>⏰ <strong>Horarios:</strong> Hoy de 14:00 a 00:00 hs</div>
+                <div>🥩 <strong>Buffet:</strong> Parrilla encendida desde las 19:00 hs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grilla de Canchas -->
+    <section id="nuestras-canchas" class="container" style="padding: 4.5rem 1.25rem 3.5rem;" aria-labelledby="canchas-title">
+      <div class="section-title-wrap">
+        <span class="section-tag">INSTALACIONES DE PRIMER NIVEL</span>
+        <h2 id="canchas-title" class="section-title">ELEGÍ TU CANCHA</h2>
+        <p>
+          Contamos con opciones para 10, 14 y 22 jugadores, con piso amortiguado, 
+          canchas techadas para días de lluvia y canchas abiertas bajo reflectores.
+        </p>
+      </div>
+
+      <!-- Contenedor dinámico de canchas alimentado por js/canchas.js -->
+      <div class="canchas-grid" id="landing-canchas-grid">
+        <!-- Renderizado dinámicamente con JavaScript -->
+      </div>
+    </section>
+
+    <!-- Servicios del Club (El Tercer Tiempo) -->
+    <section class="servicios-section" aria-labelledby="servicios-title">
+      <div class="container">
+        <div class="section-title-wrap">
+          <span class="section-tag">LA EXPERIENCIA COMPLETA</span>
+          <h2 id="servicios-title" class="section-title">EL TERCER TIEMPO ES SAGRADO</h2>
+          <p>
+            En El Potrero el partido no termina con el pitazo final. Todo lo que tu equipo necesita para antes, durante y después de los 60 minutos.
+          </p>
+        </div>
+
+        <div class="servicios-grid">
+          <article class="servicio-card">
+            <div class="servicio-icon" aria-hidden="true">💡</div>
+            <h3 class="servicio-titulo">REFLECTORES LED DE ESTADIO</h3>
+            <p class="servicio-desc">
+              Torres de iluminación perimetral antideslumbrante de hasta 1200W. Visión impecable en cada rincón sin puntos ciegos.
+            </p>
+          </article>
+
+          <article class="servicio-card">
+            <div class="servicio-icon" aria-hidden="true">🥩</div>
+            <h3 class="servicio-titulo">BUFFET & PARRILLA AL PASO</h3>
+            <p class="servicio-desc">
+              Hamburguesas caseras, sándwiches de bondiola, pizzas a la piedra y cervezas bien frías para comentar las jugadas con el equipo rival.
+            </p>
+          </article>
+
+          <article class="servicio-card">
+            <div class="servicio-icon" aria-hidden="true">🚿</div>
+            <h3 class="servicio-titulo">VESTUARIOS CON AGUA CALIENTE</h3>
+            <p class="servicio-desc">
+              Duchas individuales con presión constante y agua caliente garantizada a toda hora, lockers con candado y bancos amplios.
+            </p>
+          </article>
+
+          <article class="servicio-card">
+            <div class="servicio-icon" aria-hidden="true">🚗</div>
+            <h3 class="servicio-titulo">ESTACIONAMIENTO VIGILADO</h3>
+            <p class="servicio-desc">
+              Espacio cerrado dentro del predio con seguridad privada y cámaras para que dejes tu auto o moto con total tranquilidad.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ubicación y Preguntas Frecuentes -->
+    <section class="contacto-section" aria-labelledby="contacto-title">
+      <div class="container">
+        <div class="contacto-grid">
+          <div class="contacto-info-box">
+            <h2 id="contacto-title" style="margin-bottom: 1.5rem; color: var(--accent);">UBICACIÓN & CONTACTO</h2>
+            
+            <div class="contacto-item">
+              <div class="contacto-item-icon" aria-hidden="true">📍</div>
+              <div>
+                <h3 class="contacto-item-title">DIRECCIÓN</h3>
+                <p class="contacto-item-text">Av. del Fútbol 1986 (esq. Los Reflectores), Barrio Parque</p>
+                <p class="contacto-item-text">A 5 minutos de la autopista, fácil acceso y colectivos directos.</p>
+              </div>
+            </div>
+
+            <div class="contacto-item">
+              <div class="contacto-item-icon" aria-hidden="true">⏰</div>
+              <div>
+                <h3 class="contacto-item-title">HORARIOS DE ATENCIÓN</h3>
+                <p class="contacto-item-text">Lunes a Domingo: 14:00 a 00:00 hs</p>
+                <p class="contacto-item-text">Turnos de 60 minutos con 10' de tolerancia entre partidos.</p>
+              </div>
+            </div>
+
+            <div class="contacto-item">
+              <div class="contacto-item-icon" aria-hidden="true">📱</div>
+              <div>
+                <h3 class="contacto-item-title">WHATSAPP DIRECTO</h3>
+                <p class="contacto-item-text">+54 9 11 4567-8900 (Atención de 10:00 a 23:00 hs)</p>
+              </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+              <a href="reservar.html" class="btn btn-primary" style="width: 100%;">
+                RESERVAR MI CANCHA AHORA
+              </a>
+            </div>
+          </div>
+
+          <!-- Cancha Esquema y Normas de Convivencia -->
+          <div style="background-color: var(--ink); border: 2px solid var(--border); padding: 2rem;">
+            <h2 style="margin-bottom: 1rem; color: var(--chalk);">REGLAMENTO DE LA CASA</h2>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem; color: var(--chalk-dim); font-size: 0.95rem;">
+              <li style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                <span style="color: var(--accent); font-weight: bold;">01.</span>
+                <span><strong>Calzado permitido:</strong> Zapatillas de fútbol o botines de suela multitapón (turf). Prohibidos los botines con tapones de aluminio o suela alta de once en canchas sintéticas.</span>
+              </li>
+              <li style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                <span style="color: var(--accent); font-weight: bold;">02.</span>
+                <span><strong>Puntualidad:</strong> Los turnos inician en punto. Se recomienda llegar 15 minutos antes para cambiarse en los vestuarios sin perder tiempo de juego.</span>
+              </li>
+              <li style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                <span style="color: var(--accent); font-weight: bold;">03.</span>
+                <span><strong>Pelotas y pecheras:</strong> Se entrega un juego de pecheras limpias y una pelota reglamentaria en mesa de entrada dejando un documento como fianza.</span>
+              </li>
+              <li style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                <span style="color: var(--accent); font-weight: bold;">04.</span>
+                <span><strong>Cuidado y respeto:</strong> El Potrero es un espacio de amigos y familias. Fomentamos el juego limpio y la buena onda adentro y afuera del alambrado.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pie de página -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo">
+            <div class="brand-icon" aria-hidden="true">⚽</div>
+            <span class="brand-name">EL POTRERO</span>
+          </div>
+          <p class="footer-desc">
+            Complejo deportivo de fútbol 5, 7 y 11. Viví la verdadera mística de barrio con infraestructura de primer nivel y luces de estadio.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="footer-links-title">ACCESOS RÁPIDOS</h3>
+          <ul class="footer-links-list">
+            <li><a href="index.html" class="footer-link">Inicio</a></li>
+            <li><a href="reservar.html" class="footer-link">Reservar Turno</a></li>
+            <li><a href="#nuestras-canchas" class="footer-link">Nuestras Canchas</a></li>
+            <li><a href="#servicios-title" class="footer-link">El Tercer Tiempo</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="footer-links-title">CONTACTO</h3>
+          <ul class="footer-links-list">
+            <li class="footer-link">Av. del Fútbol 1986, Barrio Parque</li>
+            <li class="footer-link">Tel: +54 9 11 4567-8900</li>
+            <li class="footer-link">Email: reservas@elpotrero.com</li>
+            <li class="footer-link">Lun a Dom: 14:00 a 00:00 hs</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 El Potrero Fútbol Club. Todos los derechos reservados.</div>
+        <div style="color: var(--accent); font-family: var(--font-display); letter-spacing: 0.05em;">FÚTBOL DE BARRIO • PASIÓN DE SIEMPRE</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/canchas.js"></script>
+  <script>
+    // Renderizado de las 6 canchas en la landing
+    document.addEventListener('DOMContentLoaded', () => {
+      const grid = document.getElementById('landing-canchas-grid');
+      if (!grid || !window.CANCHAS) return;
+
+      grid.innerHTML = window.CANCHAS.map(cancha => {
+        const badgeTechada = cancha.techada 
+          ? `<span class="badge-tag techada">🌧️ Techada</span>` 
+          : `<span class="badge-tag">☀️ Aire Libre</span>`;
+        const tagCategoria = cancha.categoria.toLowerCase();
+
+        return `
+          <article class="cancha-card" id="card-${cancha.id}">
+            <div>
+              <div class="cancha-header">
+                <span class="cancha-num-tag">CANCHA #${cancha.numero}</span>
+                <div class="cancha-tags">
+                  <span class="badge-tag ${tagCategoria}">${cancha.tipo}</span>
+                  ${badgeTechada}
+                </div>
+              </div>
+              <h3 class="cancha-nombre">${cancha.nombre}</h3>
+              <p style="font-size: 0.85rem; margin-top: 0.5rem; margin-bottom: 1rem;">${cancha.descripcion}</p>
+              
+              <div class="cancha-specs">
+                <div class="spec-item">
+                  <span class="spec-lbl">Superficie</span>
+                  <span class="spec-val">${cancha.superficie}</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-lbl">Capacidad</span>
+                  <span class="spec-val">${cancha.capacidad}</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-lbl">Dimensiones</span>
+                  <span class="spec-val">${cancha.medidas}</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-lbl">Iluminación</span>
+                  <span class="spec-val">${cancha.iluminacion}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cancha-footer">
+              <div class="cancha-precio-box">
+                <span class="precio-lbl">Precio por hora</span>
+                <span class="precio-monto">${window.formatearPrecio(cancha.precioHora)}</span>
+              </div>
+              <a href="reservar.html?cancha=${cancha.id}" class="btn btn-primary">
+                RESERVAR
+              </a>
+            </div>
+          </article>
+        `;
+      }).join('');
+    });
+  </script>
+</body>
+</html>

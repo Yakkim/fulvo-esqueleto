@@ -1,0 +1,1559 @@
+/* ==========================================================================
+   EL POTRERO - SISTEMA DE DISEÑO Y ESTILOS GLOBALES
+   Estética: Club de barrio, cancha de noche bajo reflectores
+   Tipografías: Bebas Neue (Google Fonts) + Inter (Google Fonts)
+   ========================================================================== */
+
+/* 1. VARIABLES DE DISEÑO (TOKENS OFICIALES) */
+:root {
+  /* Paleta oficial El Potrero */
+  --pitch-dark: #1B4D2E;
+  --pitch-mid:  #2E7D46;
+  --pitch-deep: #133A22;
+  --chalk:      #F1F3EA;
+  --ink:        #16241C;
+  --ink-soft:   #4B5A4F;
+  --accent:     #F2B705;
+  --accent-ink: #3D2E00;
+  --border:     #D9DECB;
+
+  /* Variantes funcionales */
+  --pitch-card-bg: #153E25;
+  --pitch-card-hover: #1E5333;
+  --chalk-dim: rgba(241, 243, 234, 0.75);
+  --chalk-faint: rgba(241, 243, 234, 0.12);
+  --chalk-line: 2px solid var(--chalk);
+  --border-field: 2px solid var(--border);
+  --danger: #E63946;
+  --danger-bg: rgba(230, 57, 70, 0.15);
+  --success: #2A9D8F;
+  --success-bg: rgba(42, 157, 143, 0.15);
+
+  /* Tipografías */
+  --font-display: 'Bebas Neue', Impact, 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Elevaciones & Luces (Reflectores de estadio) */
+  --reflector-glow: 0 0 35px rgba(242, 183, 5, 0.22);
+  --reflector-beam: radial-gradient(circle at 50% -20%, rgba(242, 183, 5, 0.18) 0%, rgba(46, 125, 70, 0.2) 45%, rgba(19, 58, 34, 0.95) 90%);
+  --stadium-grid: linear-gradient(rgba(241, 243, 234, 0.03) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(241, 243, 234, 0.03) 1px, transparent 1px);
+}
+
+/* 2. RESET Y BASES */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: 0; /* Regla de oro: líneas rectas de cancha, sin bordes redondeados genéricos */
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--chalk);
+  background-color: var(--pitch-deep);
+  background-image: 
+    var(--stadium-grid),
+    radial-gradient(circle at 50% 0%, rgba(46, 125, 70, 0.35) 0%, transparent 70%);
+  background-size: 32px 32px, 100% 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accesibilidad: Enlace directo al contenido principal */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  z-index: 9999;
+  text-decoration: none;
+  border: 2px solid var(--ink);
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Foco accesible de alto contraste */
+*:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Tipografía de estadio */
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 0.95;
+}
+
+h1 { font-size: clamp(2.5rem, 8vw, 4.8rem); }
+h2 { font-size: clamp(2rem, 5vw, 3.2rem); }
+h3 { font-size: clamp(1.4rem, 3.5vw, 2rem); }
+h4 { font-size: 1.25rem; }
+
+p {
+  color: var(--chalk-dim);
+  max-width: 65ch;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* 3. LAYOUT GENERAL */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+/* Marcación de líneas de cal (Pitch Markings) */
+.chalk-line-h {
+  width: 100%;
+  height: 2px;
+  background-color: var(--chalk);
+  opacity: 0.85;
+  margin: 2rem 0;
+}
+
+.chalk-border {
+  border: 2px solid var(--chalk);
+  position: relative;
+}
+
+/* 4. ENCABEZADO Y NAVEGACIÓN */
+.site-header {
+  background-color: var(--pitch-deep);
+  border-bottom: 2px solid var(--chalk);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: 2px solid var(--chalk);
+  flex-shrink: 0;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  color: var(--chalk);
+  line-height: 0.85;
+  letter-spacing: 0.06em;
+}
+
+.brand-tagline {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.header-status {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--chalk);
+  padding: 0.35rem 0.85rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--pitch-mid);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse-live 2s infinite;
+}
+
+@keyframes pulse-live {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 12px var(--accent); }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* BOTONES CON ESTILO DE ESTADIO */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.4rem;
+  min-height: 44px; /* Touch target accesible */
+  cursor: pointer;
+  text-decoration: none;
+  border: 2px solid transparent;
+  transition: background-color 0.15s ease, transform 0.1s ease, color 0.15s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--chalk);
+  font-weight: 700;
+  box-shadow: 0 3px 0 var(--accent-ink);
+}
+
+.btn-primary:hover {
+  background-color: #ffd033;
+  color: #000;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--chalk);
+  border-color: var(--chalk);
+}
+
+.btn-secondary:hover {
+  background-color: var(--chalk);
+  color: var(--ink);
+}
+
+.btn-pitch {
+  background-color: var(--pitch-dark);
+  color: var(--chalk);
+  border-color: var(--border);
+}
+
+.btn-pitch:hover {
+  background-color: var(--pitch-mid);
+  border-color: var(--chalk);
+}
+
+.btn:disabled, .btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+/* 5. HERO SECTION (REFLECTORES Y AMBIENTE) */
+.hero-section {
+  position: relative;
+  padding: 4rem 0 3.5rem;
+  background: var(--reflector-beam);
+  border-bottom: 2px solid var(--chalk);
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 250px;
+  background: radial-gradient(ellipse at top, rgba(242, 183, 5, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--pitch-dark);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  padding: 0.3rem 0.8rem;
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.08em;
+}
+
+.hero-title {
+  color: var(--chalk);
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+.hero-title span {
+  color: var(--accent);
+  display: block;
+}
+
+.hero-description {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--chalk-dim);
+  margin-bottom: 2rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Marcador en Vivo del Hero */
+.scoreboard-box {
+  background-color: var(--ink);
+  border: 2px solid var(--chalk);
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+
+.scoreboard-box::before {
+  content: 'MARCADOR OFICIAL';
+  position: absolute;
+  top: -12px;
+  left: 1rem;
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  padding: 0.1rem 0.6rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  border: 1px solid var(--chalk);
+}
+
+.scoreboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed var(--ink-soft);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--chalk-dim);
+}
+
+.scoreboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  text-align: center;
+}
+
+.scoreboard-stat-val {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  color: var(--accent);
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(242, 183, 5, 0.4);
+}
+
+.scoreboard-stat-lbl {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--chalk-dim);
+  margin-top: 0.25rem;
+}
+
+/* 6. DETALLES DE BANDERÍN DE CÓRNER (Corner Flag) */
+/* Aplicado a elementos seleccionados / destacados */
+.corner-flag-badge {
+  position: relative;
+}
+
+.has-corner-flag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 34px 34px 0;
+  border-color: transparent var(--accent) transparent transparent;
+  z-index: 4;
+}
+
+.has-corner-flag::after {
+  content: '▲';
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 10px;
+  color: var(--accent-ink);
+  font-weight: bold;
+  transform: rotate(45deg);
+  z-index: 5;
+}
+
+/* 7. TARJETAS DE CANCHAS (GRILLA) */
+.section-title-wrap {
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.section-tag {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.section-title {
+  color: var(--chalk);
+}
+
+.canchas-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.cancha-card {
+  background-color: var(--pitch-card-bg);
+  border: 2px solid var(--border);
+  padding: 1.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cancha-card:hover {
+  border-color: var(--chalk);
+  background-color: var(--pitch-card-hover);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.cancha-card.selected {
+  border-color: var(--accent);
+  border-width: 3px;
+  background-color: #174529;
+  box-shadow: 0 0 20px rgba(242, 183, 5, 0.25);
+}
+
+/* Banderín de córner para tarjeta seleccionada */
+.cancha-card.selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 38px 38px 0;
+  border-color: transparent var(--accent) transparent transparent;
+  z-index: 10;
+}
+
+.cancha-card.selected::after {
+  content: '🚩';
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 13px;
+  line-height: 1;
+  z-index: 11;
+}
+
+.cancha-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cancha-num-tag {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  background-color: var(--pitch-deep);
+  border: 1px solid var(--border);
+  color: var(--chalk);
+  padding: 0.2rem 0.55rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.cancha-nombre {
+  font-size: 1.85rem;
+  color: var(--chalk);
+  line-height: 1;
+}
+
+.cancha-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.badge-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.6rem;
+  text-transform: uppercase;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--pitch-mid);
+  color: var(--chalk-dim);
+}
+
+.badge-tag.techada {
+  background-color: rgba(242, 183, 5, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.badge-tag.f5 {
+  border-color: #64B5F6;
+  color: #90CAF9;
+}
+.badge-tag.f7 {
+  border-color: #81C784;
+  color: #A5D6A7;
+}
+.badge-tag.f11 {
+  border-color: #FFB74D;
+  color: #FFE082;
+}
+
+.cancha-specs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(217, 222, 203, 0.15);
+  padding: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.spec-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.spec-lbl {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chalk-dim);
+}
+
+.spec-val {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--chalk);
+}
+
+.cancha-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px dashed rgba(217, 222, 203, 0.25);
+  padding-top: 1rem;
+  gap: 1rem;
+}
+
+.cancha-precio-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.precio-lbl {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chalk-dim);
+}
+
+.precio-monto {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  color: var(--accent);
+  line-height: 0.95;
+}
+
+.precio-unidad {
+  font-size: 0.8rem;
+  color: var(--chalk-dim);
+}
+
+/* 8. FLUJO DE RESERVA: STEPPER */
+.stepper-nav {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 2px solid var(--chalk);
+  background-color: var(--pitch-dark);
+  margin-bottom: 2.5rem;
+}
+
+.step-item {
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+  border-right: 1px solid var(--chalk);
+  position: relative;
+  background-color: transparent;
+  color: var(--chalk-dim);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.step-item:last-child {
+  border-right: none;
+}
+
+.step-number {
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  opacity: 0.7;
+  display: block;
+}
+
+.step-item.active {
+  background-color: var(--chalk);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.step-item.active .step-number {
+  color: var(--pitch-dark);
+  opacity: 1;
+}
+
+.step-item.completed {
+  background-color: var(--pitch-mid);
+  color: var(--chalk);
+}
+
+.step-item.completed::after {
+  content: '✓';
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+/* 9. TABLERO DE HORARIOS ESTILO MARCADOR */
+.tablero-horarios {
+  background-color: var(--ink);
+  border: 2px solid var(--chalk);
+  padding: 1.75rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.tablero-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-bottom: 2px solid var(--pitch-dark);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.tablero-titulo-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tablero-titulo {
+  font-size: 1.8rem;
+  color: var(--chalk);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tablero-led {
+  width: 10px;
+  height: 10px;
+  background-color: #00FF66;
+  box-shadow: 0 0 10px #00FF66;
+  display: inline-block;
+}
+
+/* Selector de Días */
+.dias-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.dia-btn {
+  background-color: var(--pitch-deep);
+  border: 2px solid var(--border);
+  color: var(--chalk);
+  padding: 0.75rem 0.5rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.15s ease;
+  min-height: 54px;
+}
+
+.dia-btn:hover {
+  border-color: var(--chalk);
+  background-color: var(--pitch-dark);
+}
+
+.dia-btn.active {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--chalk);
+  font-weight: 700;
+  box-shadow: 0 0 15px rgba(242, 183, 5, 0.4);
+}
+
+.dia-rel {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dia-fecha {
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
+  opacity: 0.85;
+}
+
+/* Grilla de Horarios (Slots) */
+.horarios-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+}
+
+.hora-slot {
+  background-color: var(--pitch-dark);
+  border: 2px solid var(--border);
+  color: var(--chalk);
+  padding: 1rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  min-height: 60px;
+}
+
+.hora-slot:hover:not(:disabled) {
+  border-color: var(--accent);
+  background-color: var(--pitch-mid);
+  transform: translateY(-2px);
+}
+
+.hora-slot.selected {
+  background-color: #1a4f2e;
+  border-color: var(--accent);
+  border-width: 3px;
+  box-shadow: 0 0 15px rgba(242, 183, 5, 0.3);
+}
+
+/* Banderín de córner en horario seleccionado */
+.hora-slot.selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 26px 26px 0;
+  border-color: transparent var(--accent) transparent transparent;
+  z-index: 5;
+}
+
+.hora-slot.selected::after {
+  content: '🚩';
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: 10px;
+  z-index: 6;
+}
+
+.hora-slot:disabled, .hora-slot.ocupado {
+  background-color: #121e16;
+  border-color: #27362c;
+  color: #526356;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.slot-hora {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.hora-slot.selected .slot-hora {
+  color: var(--accent);
+}
+
+.slot-estado {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid transparent;
+}
+
+.hora-slot:not(:disabled):not(.ocupado) .slot-estado {
+  background-color: rgba(46, 125, 70, 0.35);
+  border-color: var(--pitch-mid);
+  color: #5CDB95;
+}
+
+.hora-slot.selected .slot-estado {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--chalk);
+}
+
+.hora-slot:disabled .slot-estado, .hora-slot.ocupado .slot-estado {
+  background-color: rgba(230, 57, 70, 0.15);
+  border-color: rgba(230, 57, 70, 0.4);
+  color: #E63946;
+}
+
+/* 10. RESUMEN: BOLETO / TICKET DE PARTIDO */
+.ticket-wrapper {
+  background-color: var(--chalk);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  position: relative;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  margin-bottom: 2rem;
+}
+
+/* Perforación de entrada de fútbol */
+.ticket-wrapper::before,
+.ticket-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  background-color: var(--pitch-deep);
+  border: 3px solid var(--ink);
+  transform: translateY(-50%);
+  z-index: 5;
+}
+.ticket-wrapper::before {
+  left: -13px;
+  border-left-color: transparent;
+  border-top-color: transparent;
+  transform: translateY(-50%) rotate(45deg);
+}
+.ticket-wrapper::after {
+  right: -13px;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.ticket-header {
+  background-color: var(--pitch-dark);
+  color: var(--chalk);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px dashed var(--chalk);
+}
+
+.ticket-club {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+.ticket-stub-code {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: 0.1em;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--pitch-mid);
+}
+
+.ticket-body {
+  padding: 1.5rem;
+}
+
+.ticket-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.ticket-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.ticket-lbl {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.ticket-val {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ticket-val.cancha-destacada {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--pitch-dark);
+}
+
+.ticket-val.precio-destacado {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--pitch-dark);
+}
+
+.ticket-barcode-wrap {
+  border-top: 2px dashed #b0b8a4;
+  padding-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.barcode-lines {
+  width: 100%;
+  max-width: 320px;
+  height: 42px;
+  background: repeating-linear-gradient(
+    90deg,
+    #16241C,
+    #16241C 3px,
+    transparent 3px,
+    transparent 6px,
+    #16241C 6px,
+    #16241C 10px,
+    transparent 10px,
+    transparent 12px,
+    #16241C 12px,
+    #16241C 16px,
+    transparent 16px,
+    transparent 20px
+  );
+}
+
+.barcode-text {
+  font-family: monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  color: var(--ink-soft);
+}
+
+/* 11. FORMULARIO Y MÉTODOS DE PAGO */
+.form-card {
+  background-color: var(--pitch-dark);
+  border: 2px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chalk);
+  margin-bottom: 0.4rem;
+}
+
+.form-input {
+  width: 100%;
+  background-color: var(--pitch-deep);
+  border: 2px solid var(--border);
+  color: var(--chalk);
+  padding: 0.75rem 1rem;
+  min-height: 48px;
+  transition: border-color 0.15s ease;
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+  background-color: #0e2b19;
+}
+
+.form-input::placeholder {
+  color: rgba(241, 243, 234, 0.4);
+}
+
+/* Métodos de Pago Visuales */
+.metodos-pago-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Variante con una sola opción de pago (Mercado Pago) */
+.metodos-pago-grid.metodos-pago-grid-unico {
+  grid-template-columns: 1fr;
+  max-width: 360px;
+}
+
+.metodo-card {
+  background-color: var(--pitch-deep);
+  border: 2px solid var(--border);
+  padding: 1.25rem;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.15s ease;
+}
+
+.metodo-card:hover {
+  border-color: var(--chalk);
+  background-color: #174227;
+}
+
+.metodo-card.selected {
+  border-color: var(--accent);
+  border-width: 3px;
+  background-color: #19482b;
+  box-shadow: 0 0 15px rgba(242, 183, 5, 0.25);
+}
+
+.metodo-card.selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 28px 28px 0;
+  border-color: transparent var(--accent) transparent transparent;
+  z-index: 5;
+}
+
+.metodo-card.selected::after {
+  content: '🚩';
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: 11px;
+  z-index: 6;
+}
+
+.metodo-radio {
+  accent-color: var(--accent);
+  width: 20px;
+  height: 20px;
+}
+
+.metodo-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metodo-nombre {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  color: var(--chalk);
+  line-height: 1;
+}
+
+.metodo-desc {
+  font-size: 0.8rem;
+  color: var(--chalk-dim);
+  margin-top: 0.2rem;
+}
+
+/* Aviso de Modo Demostración */
+.demo-notice {
+  background-color: rgba(242, 183, 5, 0.12);
+  border: 2px solid var(--accent);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.demo-notice-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.demo-notice-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.15rem;
+}
+
+.demo-notice-text {
+  font-size: 0.82rem;
+  color: var(--chalk);
+  margin: 0;
+}
+
+/* 12. PANTALLA DE CONFIRMACIÓN (PASO 4) */
+.confirmacion-box {
+  background-color: var(--pitch-dark);
+  border: 3px solid var(--chalk);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  position: relative;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+}
+
+.confirmacion-icon {
+  width: 72px;
+  height: 72px;
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  border: 2px solid var(--chalk);
+  margin-bottom: 1.25rem;
+}
+
+.confirmacion-title {
+  color: var(--chalk);
+  margin-bottom: 0.5rem;
+}
+
+.codigo-reserva-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--pitch-deep);
+  border: 2px dashed var(--accent);
+  padding: 1rem 2rem;
+  margin: 1.5rem 0;
+}
+
+.codigo-lbl {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.codigo-val {
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  color: var(--chalk);
+  letter-spacing: 0.15em;
+  line-height: 1;
+}
+
+.confirmacion-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  max-width: 480px;
+  margin: 1.5rem auto 0;
+}
+
+/* 13. SECCIÓN SERVICIOS (CLUB DE BARRIO) */
+.servicios-section {
+  padding: 4.5rem 0;
+  border-bottom: 2px solid var(--chalk);
+  background: rgba(19, 58, 34, 0.75);
+}
+
+.servicios-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.servicio-card {
+  background-color: var(--pitch-dark);
+  border: 2px solid var(--border);
+  padding: 1.75rem 1.5rem;
+  position: relative;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.servicio-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+}
+
+.servicio-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.servicio-titulo {
+  font-size: 1.5rem;
+  color: var(--chalk);
+  margin-bottom: 0.5rem;
+}
+
+.servicio-desc {
+  font-size: 0.9rem;
+  color: var(--chalk-dim);
+}
+
+/* 14. SECCIÓN UBICACIÓN Y CONTACTO */
+.contacto-section {
+  padding: 4.5rem 0;
+  border-bottom: 2px solid var(--chalk);
+}
+
+.contacto-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.contacto-info-box {
+  background-color: var(--pitch-dark);
+  border: 2px solid var(--chalk);
+  padding: 2rem;
+}
+
+.contacto-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.contacto-item-icon {
+  font-size: 1.5rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.contacto-item-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--chalk);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.contacto-item-text {
+  font-size: 0.9rem;
+  color: var(--chalk-dim);
+}
+
+/* 15. PIE DE PÁGINA (FOOTER) */
+.site-footer {
+  background-color: var(--ink);
+  border-top: 3px solid var(--chalk);
+  padding: 3rem 0 2rem;
+  margin-top: auto;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--ink-soft);
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-desc {
+  font-size: 0.85rem;
+  color: var(--chalk-dim);
+}
+
+.footer-links-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  margin-bottom: 0.75rem;
+}
+
+.footer-links-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-link {
+  font-size: 0.85rem;
+  color: var(--chalk-dim);
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--accent);
+}
+
+.footer-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  padding-top: 1.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--chalk-dim);
+}
+
+/* 16. MEDIA QUERIES (MOBILE-FIRST A DESKTOP) */
+@media (min-width: 640px) {
+  .header-status {
+    display: inline-flex;
+  }
+  
+  .canchas-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .horarios-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .metodos-pago-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .servicios-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .contacto-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .confirmacion-acciones {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 960px) {
+  .hero-grid {
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 3.5rem;
+  }
+
+  .canchas-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .servicios-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .footer-grid {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+
+  .footer-bottom {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+/* 17. CLASES AUXILIARES DE FLUJO Y NAVEGACIÓN RESPONSIVA */
+.nav-canchas-link {
+  display: none;
+}
+@media (min-width: 768px) {
+  .nav-canchas-link {
+    display: inline-flex;
+  }
+}
+
+.paso-action-bar {
+  background-color: var(--ink);
+  border: 2px solid var(--border);
+  padding: 1.25rem 1.5rem;
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: stretch;
+}
+@media (min-width: 640px) {
+  .paso-action-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.paso-nav-bar {
+  background-color: var(--pitch-dark);
+  border: 2px solid var(--border);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .paso-nav-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.paso-nav-right {
+  text-align: center;
+}
+@media (min-width: 640px) {
+  .paso-nav-right {
+    text-align: right;
+  }
+}
+
+.resumen-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+@media (min-width: 860px) {
+  .resumen-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+

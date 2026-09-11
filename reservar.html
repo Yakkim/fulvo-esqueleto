@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Completá tu reserva online en El Potrero. Elegí tu cancha, seleccioná el horario en el tablero de estadio y confirmá tu turno al instante.">
+  <meta name="theme-color" content="#133A22">
+  <meta property="og:title" content="Reserva de Canchas | El Potrero">
+  <meta property="og:description"
+    content="Flujo interactivo de reservas para canchas de fútbol 5, 7 y 11. Elegí día, horario y confirmá en simples pasos.">
+  <meta property="og:type" content="website">
+  <title>Reservar Cancha | El Potrero - Fútbol de Noche</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <!-- Google Fonts: Bebas Neue e Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Estilos Globales -->
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+
+<body>
+
+  <!-- Accesibilidad: Saltar al contenido -->
+  <a href="#flujo-reserva" class="skip-link">Saltar al flujo de reserva</a>
+
+  <!-- Encabezado Principal -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand-logo" aria-label="El Potrero - Volver al Inicio">
+        <div class="brand-icon" aria-hidden="true">⚽</div>
+        <div class="brand-text">
+          <span class="brand-name">EL POTRERO</span>
+          <span class="brand-tagline">Boletería de Turnos Online</span>
+        </div>
+      </a>
+
+      <div class="header-status" aria-label="Disponibilidad">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span>Tablero en Vivo</span>
+      </div>
+
+      <nav class="header-actions">
+        <a href="index.html" class="btn btn-secondary">
+          ← VOLVER AL CLUB
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="flujo-reserva" class="container" style="padding: 2.5rem 1.25rem 4rem;">
+    <!-- Barra de Pasos (Stepper) -->
+    <div id="stepper-container">
+      <nav class="stepper-nav" aria-label="Progreso de la reserva">
+        <div class="step-item active" id="step-tab-1" aria-current="step">
+          <span class="step-number">PASO 1</span>
+          <span>1. CANCHA</span>
+        </div>
+        <div class="step-item" id="step-tab-2">
+          <span class="step-number">PASO 2</span>
+          <span>2. HORARIO</span>
+        </div>
+        <div class="step-item" id="step-tab-3">
+          <span class="step-number">PASO 3</span>
+          <span>3. PAGO</span>
+        </div>
+        <div class="step-item" id="step-tab-4">
+          <span class="step-number">PASO 4</span>
+          <span>4. CONFIRMACIÓN</span>
+        </div>
+      </nav>
+    </div>
+
+    <!-- =========================================================================
+         PASO 1: ELEGIR CANCHA
+         ========================================================================= -->
+    <section id="panel-paso-1" aria-labelledby="titulo-paso-1">
+      <div class="section-title-wrap">
+        <span class="section-tag">PASO 1 DE 4</span>
+        <h1 id="titulo-paso-1" class="section-title">ELEGÍ TU CANCHA</h1>
+        <p>
+          Seleccioná una de nuestras 6 canchas reglamentarias para ver la disponibilidad horaria en el tablero.
+        </p>
+      </div>
+
+      <!-- Grilla de 6 Canchas -->
+      <div class="canchas-grid" id="canchas-selector-grid" role="region" aria-label="Lista de canchas disponibles">
+        <!-- Renderizado dinámico desde js/reserva.js -->
+      </div>
+
+      <!-- Barra de Acción Inferior Paso 1 -->
+      <div class="paso-action-bar">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span style="font-size: 1.5rem;" aria-hidden="true">⚽</span>
+          <div>
+            <div
+              style="font-size: 0.75rem; text-transform: uppercase; color: var(--accent); font-weight: bold; letter-spacing: 0.05em;">
+              ESTADO DE SELECCIÓN</div>
+            <div id="txt-cancha-seleccionada-info" style="font-size: 0.95rem; color: var(--chalk); font-weight: 500;">
+              Seleccioná una de las 6 canchas para continuar.
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="btn-continuar-paso-1" class="btn btn-secondary" disabled
+          aria-label="Continuar a selección de horario">
+          CONTINUAR A HORARIOS →
+        </button>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         PASO 2: ELEGIR HORARIO (TABLERO ESTILO MARCADOR)
+         ========================================================================= -->
+    <section id="panel-paso-2" aria-labelledby="titulo-paso-2" style="display: none;" hidden>
+      <div class="section-title-wrap">
+        <span class="section-tag">PASO 2 DE 4</span>
+        <h2 id="titulo-paso-2" class="section-title">TABLERO DE HORARIOS</h2>
+        <p id="tablero-cancha-nombre" style="font-size: 1.1rem; color: var(--accent); font-weight: 600;">
+          Cancha seleccionada
+        </p>
+      </div>
+
+      <div class="tablero-horarios" role="region" aria-label="Marcador de horarios">
+        <div class="tablero-header">
+          <div class="tablero-titulo-box">
+            <div class="tablero-titulo">
+              <span class="tablero-led" aria-hidden="true"></span>
+              <span>MARCADOR DE DISPONIBILIDAD (14:00 A 23:00)</span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--chalk-dim); letter-spacing: 0.08em;">TIEMPO REAL</span>
+          </div>
+
+          <!-- Selector de Días: Hoy, Mañana, Pasado -->
+          <div class="dias-selector" id="dias-selector-box" role="group" aria-label="Selector de día de reserva">
+            <!-- Renderizado dinámico desde js/reserva.js -->
+          </div>
+        </div>
+
+        <!-- Grilla de Slots Horarios de 14:00 a 23:00 -->
+        <div class="horarios-grid" id="horarios-grid-box" role="group" aria-label="Turnos disponibles">
+          <!-- Renderizado dinámico desde js/reserva.js -->
+        </div>
+      </div>
+
+      <!-- Barra de Navegación Paso 2 -->
+      <div class="paso-nav-bar">
+        <button type="button" id="btn-volver-paso-1" class="btn btn-secondary">
+          ← VOLVER A CANCHAS
+        </button>
+
+        <div class="paso-nav-right">
+          <div id="txt-horario-seleccionado-info"
+            style="font-size: 0.95rem; color: var(--chalk); font-weight: 600; margin-bottom: 0.5rem;">
+            Elegí un horario en estado LIBRE para continuar.
+          </div>
+          <button type="button" id="btn-continuar-paso-2" class="btn btn-secondary" disabled
+            aria-label="Continuar al resumen y pago">
+            CONTINUAR AL PAGO →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         PASO 3: RESUMEN Y PAGO SIMULADO
+         ========================================================================= -->
+    <section id="panel-paso-3" aria-labelledby="titulo-paso-3" style="display: none;" hidden>
+      <div class="section-title-wrap">
+        <span class="section-tag">PASO 3 DE 4</span>
+        <h2 id="titulo-paso-3" class="section-title">RESUMEN DEL TURNO & CONFIRMACIÓN</h2>
+        <p>
+          Verificá los detalles de tu entrada oficial, ingresá tus datos de contacto y seleccioná el medio de pago.
+        </p>
+      </div>
+
+      <div class="resumen-grid">
+        <!-- Boleto / Ticket de Partido -->
+        <div>
+          <h3 style="margin-bottom: 1rem; color: var(--accent);">BOLETO OFICIAL DE RESERVA</h3>
+          <div id="ticket-resumen-container">
+            <!-- Renderizado dinámico desde js/reserva.js -->
+          </div>
+
+          <!-- Aviso de Demostración Prominente -->
+          <div class="demo-notice" role="note">
+            <div class="demo-notice-icon" aria-hidden="true">ℹ️</div>
+            <div>
+              <div class="demo-notice-title">MODO DEMOSTRACIÓN</div>
+              <p class="demo-notice-text">
+                Este es un prototipo visual de cliente para El Potrero. No se procesan pagos reales ni se debitará
+                dinero de tus cuentas.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulario de Contacto y Medios de Pago -->
+        <div>
+          <form id="form-reserva-final" novalidate>
+            <div class="form-card">
+              <h3 style="margin-bottom: 1.25rem; color: var(--chalk); font-size: 1.4rem;">DATOS DEL CAPITÁN</h3>
+
+              <div class="form-group">
+                <label for="cliente-nombre" class="form-label">Nombre y Apellido *</label>
+                <input type="text" id="cliente-nombre" name="nombre" class="form-input" placeholder="Ej: Martín Palermo"
+                  required autocomplete="name">
+              </div>
+
+              <div class="form-group">
+                <label for="cliente-telefono" class="form-label">Teléfono / WhatsApp *</label>
+                <input type="tel" id="cliente-telefono" name="telefono" class="form-input"
+                  placeholder="Ej: +54 9 11 5555-4444" required autocomplete="tel">
+              </div>
+
+            </div>
+
+            <!-- Selección de Medios de Pago Visual -->
+            <fieldset style="border: none; margin: 0; padding: 0;">
+              <legend
+                style="font-family: var(--font-display); font-size: 1.4rem; color: var(--chalk); margin-bottom: 1rem; text-transform: uppercase;">
+                FORMA DE PAGO SIMULADA
+              </legend>
+
+              <div class="metodos-pago-grid metodos-pago-grid-unico">
+                <!-- Única opción disponible: Mercado Pago -->
+                <div class="metodo-card selected" id="metodo-mp" role="button" tabindex="0">
+                  <input type="radio" name="metodo_pago" id="pago-mp" value="mercadopago" class="metodo-radio" checked>
+                  <div class="metodo-info">
+                    <span class="metodo-nombre">MERCADO PAGO</span>
+                    <span class="metodo-desc">Dinero en cuenta o débito</span>
+                  </div>
+                </div>
+              </div>
+              <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--chalk-dim);">
+                Por ahora es el único medio de pago disponible. Próximamente vamos a integrar el pago real con Mercado
+                Pago.
+              </p>
+            </fieldset>
+
+            <!-- Acciones de Navegación Paso 3 -->
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: space-between;">
+              <button type="button" id="btn-volver-paso-2" class="btn btn-secondary">
+                ← CAMBIAR HORARIO
+              </button>
+
+              <button type="submit" class="btn btn-primary" id="btn-confirmar-reserva" style="font-size: 1.35rem;">
+                CONFIRMAR RESERVA ⚽
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         PASO 4: CONFIRMACIÓN Y COMPROBANTE OFICIAL
+         ========================================================================= -->
+    <section id="panel-paso-4" aria-labelledby="titulo-paso-4" style="display: none;" hidden>
+      <div class="confirmacion-box" role="status" aria-live="polite">
+        <div class="confirmacion-icon" aria-hidden="true">✓</div>
+
+        <h1 id="titulo-paso-4" class="confirmacion-title">¡RESERVA CONFIRMADA EN EL POTRERO!</h1>
+        <p style="margin: 0 auto 1.5rem; font-size: 1.1rem; max-width: 60ch;">
+          Tu turno ha quedado registrado en nuestro sistema. Presentá el código en boletería o mostralo desde tu celular
+          al llegar al predio.
+        </p>
+
+        <!-- Código de Reserva Generado -->
+        <div class="codigo-reserva-wrap">
+          <span class="codigo-lbl">CÓDIGO DE RESERVA OFICIAL</span>
+          <span class="codigo-val" id="confirmacion-codigo-texto">POTRERO-0000</span>
+        </div>
+
+        <!-- Ticket Completo de Confirmación -->
+        <div id="confirmacion-resumen-ticket" style="max-width: 650px; margin: 0 auto; text-align: left;">
+          <!-- Inyectado por js/reserva.js -->
+        </div>
+
+        <!-- Acciones Post-Reserva -->
+        <div class="confirmacion-acciones">
+          <a href="#" id="btn-whatsapp-reserva" class="btn btn-primary" target="_blank" rel="noopener">
+            COMPARTIR EN WHATSAPP 📲
+          </a>
+          <button type="button" onclick="reiniciarReserva()" class="btn btn-pitch">
+            RESERVAR DE NUEVO ↺
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pie de página -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border: none; padding: 0;">
+        <div>&copy; 2026 El Potrero Fútbol Club. Sistema de Reserva de Canchas.</div>
+        <div style="color: var(--accent); font-family: var(--font-display);">BOLETERÍA OFICIAL</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/canchas.js"></script>
+  <script src="js/reserva.js"></script>
+</body>
+
+</html>
