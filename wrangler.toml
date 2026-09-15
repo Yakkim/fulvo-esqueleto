@@ -7,6 +7,26 @@ directory = "./public"
 binding = "ASSETS"
 
 [[d1_databases]]
-binding = "flexicanchas_db"
+binding = "DB"
 database_name = "flexicanchas-db"
 database_id = "3f9f5b5f-02d6-4cb2-9327-66ceade5c156"
+
+[[r2_buckets]]
+binding = "IMAGENES"
+bucket_name = "flexicanchas-imagenes"
+
+[vars]
+TURNSTILE_SITE_KEY = "0x4AAAAAAE23uWQOrLzJn_FJ"
+ENVIRONMENT = "development"
+
+[env.staging]
+name = "flexicanchas-staging"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+
+[env.production]
+name = "flexicanchas-prod"
+
+[env.production.vars]
+ENVIRONMENT = "production"
