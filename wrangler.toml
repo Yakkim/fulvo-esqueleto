@@ -1,0 +1,12 @@
+name = "flexicanchas"
+main = "src/index.js"
+compatibility_date = "2026-09-15"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "flexicanchas_db"
+database_name = "flexicanchas-db"
+database_id = "3f9f5b5f-02d6-4cb2-9327-66ceade5c156"
