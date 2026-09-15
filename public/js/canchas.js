@@ -139,8 +139,38 @@ function obtenerCanchaPorId(id) {
  * @param {string} fechaStr (formato YYYY-MM-DD o clave del día)
  * @returns {Array<{hora: string, disponible: boolean, etiqueta: string}>}
  */
+/**
+ * Lee los bloqueos administrativos guardados por el panel (localStorage).
+ * Devuelve un array vacío si todavía no hay bloqueos o si algo falla.
+ *
+ * TODO: cuando exista backend real, esto deja de leer localStorage y pasa
+ * a venir directo de la misma respuesta de /api/horarios-disponibles
+ */
+function obtenerBloqueosGuardados(canchaId, fechaStr) {
+  try {
+    const bloqueos = JSON.parse(localStorage.getItem('elpotrero_admin_bloqueos')) || [];
+    return bloqueos.filter(b => b.canchaId === canchaId && b.fecha === fechaStr);
+  } catch (e) {
+    console.error('Error al leer bloqueos de localStorage:', e);
+    return [];
+  }
+}
+
+/**
+ * Genera la disponibilidad de horarios para una cancha y fecha específica,
+ * cruzando primero contra los bloqueos administrativos reales guardados por
+ * el panel, y usando el mock determinístico solo como relleno para el resto.
+ *
+ * TODO: reemplazar por fetch a /api/horarios-disponibles?cancha=${canchaId}&fecha=${fechaISO}
+ *
+ * @param {string} canchaId 
+ * @param {string} fechaStr (formato YYYY-MM-DD)
+ * @returns {Array<{hora: string, disponible: boolean, etiqueta: string, motivo?: string}>}
+ */
 function obtenerHorariosDisponibles(canchaId, fechaStr) {
-  // Hash determinístico simple basado en canchaId + fechaStr
+  const bloqueos = obtenerBloqueosGuardados(canchaId, fechaStr);
+
+  // Hash determinístico simple basado en canchaId + fechaStr (igual que antes)
   const semillaStr = `${canchaId}-${fechaStr}`;
   let hash = 0;
   for (let i = 0; i < semillaStr.length; i++) {
@@ -148,15 +178,24 @@ function obtenerHorariosDisponibles(canchaId, fechaStr) {
   }
 
   return HORARIOS_OPERATIVOS.map((hora, indice) => {
-    // Horarios más cotizados (20:00 a 22:00) tienen mayor probabilidad de estar reservados
+    // 1. Si está bloqueado desde el panel, gana siempre esto
+    const bloqueo = bloqueos.find(b => b.horarios.includes(hora));
+    if (bloqueo) {
+      return {
+        hora,
+        disponible: false,
+        etiqueta: 'OCUPADO',
+        motivo: bloqueo.motivo
+      };
+    }
+
+    // 2. Si no está bloqueado, seguimos con el mock determinístico de siempre
     const horaNum = parseInt(hora.split(':')[0], 10);
     const esHorarioPico = horaNum >= 20 && horaNum <= 22;
 
-    // Pseudo-random determinístico para cada slot
     const pseudoRandom = Math.sin(hash + indice * 17) * 10000;
     const factor = pseudoRandom - Math.floor(pseudoRandom);
 
-    // Ocupación: ~60% en horario pico, ~35% en horario temprano
     const ocupado = esHorarioPico ? (factor > 0.35) : (factor > 0.65);
 
     return {

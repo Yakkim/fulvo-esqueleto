@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Panel de Control y Administración de El Potrero. Gestión de canchas, calendario de turnos, bloqueos de horarios y reportes de ocupación e ingresos.">
+  <meta name="theme-color" content="#133A22">
+  <title>Panel de Administración | El Potrero Fútbol Club</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+
+  <!-- Google Fonts: Bebas Neue e Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Estilos Globales del Sitio y Propios del Panel -->
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body class="admin-body">
+
+  <!-- Accesibilidad: Saltar al contenido -->
+  <a href="#admin-main" class="skip-link">Saltar al panel de administración</a>
+
+  <!-- =========================================================================
+       PANTALLA DE ACCESO PLACEHOLDER (Sin autenticación real todavía)
+       // TODO: reemplazar por autenticación real contra el backend antes de producción.
+       ========================================================================= -->
+  <div id="login-overlay" class="login-screen-overlay" style="display: none;" aria-modal="true" role="dialog"
+    aria-labelledby="login-titulo">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo-icon" aria-hidden="true">⚽</div>
+        <h1 id="login-titulo" class="login-title">EL POTRERO</h1>
+        <p class="login-subtitle">Panel de Control • Acceso Administrativo</p>
+      </div>
+
+      <form id="form-login" class="login-form" novalidate>
+        <div id="login-error" class="login-error-msg" role="alert"></div>
+
+        <div class="form-group">
+          <label for="login-usuario" class="form-label">Usuario</label>
+          <input type="text" id="login-usuario" class="form-input" placeholder="admin" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label for="login-password" class="form-label">Contraseña</label>
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••" required
+            autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.3rem;">
+          INGRESAR AL PANEL ⚽
+        </button>
+
+        <div class="login-hint-box" role="note">
+          <span>ℹ️ <strong>Credenciales demo:</strong> Usuario: <code>admin</code> | Contraseña: <code>potrero2026</code></span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ENCABEZADO PRINCIPAL (Misma identidad que index.html y reservar.html)
+       ========================================================================= -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="../index.html" class="brand-logo" aria-label="El Potrero - Volver al Inicio">
+        <div class="brand-icon" aria-hidden="true">⚽</div>
+        <div class="brand-text">
+          <span class="brand-name">EL POTRERO</span>
+          <span class="brand-tagline">Panel de Administración</span>
+        </div>
+      </a>
+
+      <!-- Estado en vivo -->
+      <div class="header-status" aria-label="Estado del sistema">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span>SESIÓN ACTIVA</span>
+      </div>
+
+      <nav class="header-actions" aria-label="Acciones de cabecera">
+        <div class="admin-user-pill">
+          <span>👤 ADMIN: <strong>MARTÍN</strong></span>
+          <button type="button" id="btn-logout" class="btn-logout" aria-label="Cerrar Sesión">CERRAR</button>
+        </div>
+        <a href="../index.html" class="btn btn-secondary" style="font-size: 1.05rem;">
+          ← SITIO PÚBLICO
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       CONTENIDO PRINCIPAL: NAVEGACIÓN POR PESTAÑAS (ESTILO TABLERO DE ESTADIO)
+       ========================================================================= -->
+  <main id="admin-main" class="container admin-main-wrap">
+
+    <!-- Navegación por Pestañas (Tablero de Estadio) -->
+    <nav class="admin-tabs-nav" role="tablist" aria-label="Secciones del panel de administración">
+      <button type="button" role="tab" id="tab-calendario" class="admin-tab-btn active" aria-selected="true"
+        aria-controls="panel-calendario">
+        <span class="admin-tab-num">MODULO 01</span>
+        <span>📅 1. CALENDARIO</span>
+      </button>
+      <button type="button" role="tab" id="tab-canchas" class="admin-tab-btn" aria-selected="false"
+        aria-controls="panel-canchas">
+        <span class="admin-tab-num">MODULO 02</span>
+        <span>⚽ 2. CANCHAS</span>
+      </button>
+      <button type="button" role="tab" id="tab-bloqueos" class="admin-tab-btn" aria-selected="false"
+        aria-controls="panel-bloqueos">
+        <span class="admin-tab-num">MODULO 03</span>
+        <span>🔒 3. BLOQUEOS</span>
+      </button>
+      <button type="button" role="tab" id="tab-reportes" class="admin-tab-btn" aria-selected="false"
+        aria-controls="panel-reportes">
+        <span class="admin-tab-num">MODULO 04</span>
+        <span>📊 4. REPORTES</span>
+      </button>
+    </nav>
+
+    <!-- =======================================================================
+         SECCIÓN 1: CALENDARIO
+         ======================================================================= -->
+    <section id="panel-calendario" class="admin-panel-section active" role="tabpanel"
+      aria-labelledby="tab-calendario">
+      <div class="section-toolbar">
+        <div class="toolbar-title-group">
+          <h2>CALENDARIO DE TURNOS</h2>
+          <p>Visualizá la grilla operativa del predio, reservas confirmadas, pendientes y horarios bloqueados.</p>
+        </div>
+
+        <div class="toolbar-controls">
+          <!-- Toggle Día / Semana / Mes -->
+          <div class="calendar-view-toggle" role="group" aria-label="Modo de vista">
+            <button type="button" class="view-btn active" data-view="dia">DÍA</button>
+            <button type="button" class="view-btn" data-view="semana">SEMANA</button>
+            <button type="button" class="view-btn" data-view="mes">MES</button>
+          </div>
+
+          <!-- Navegador de Fecha -->
+          <div class="date-navigator">
+            <button type="button" id="btn-fecha-prev" class="date-nav-btn" aria-label="Día anterior">‹</button>
+            <span id="cal-fecha-texto" class="date-display-label">Hoy</span>
+            <button type="button" id="btn-fecha-next" class="date-nav-btn" aria-label="Día siguiente">›</button>
+            <input type="date" id="cal-fecha-input" class="input-date-picker" aria-label="Seleccionar fecha específica">
+          </div>
+
+          <!-- Filtro por Cancha -->
+          <select id="cal-filtro-cancha" class="cancha-filter-select" aria-label="Filtrar por cancha">
+            <option value="todas">TODAS LAS CANCHAS (6)</option>
+            <option value="cancha-1">Cancha 1 - La Bombonerita (F5)</option>
+            <option value="cancha-2">Cancha 2 - El Monumentalito (F5)</option>
+            <option value="cancha-3">Cancha 3 - El Diego (F7)</option>
+            <option value="cancha-4">Cancha 4 - La Scaloneta (F7)</option>
+            <option value="cancha-5">Cancha 5 - El Potrero Central (F11)</option>
+            <option value="cancha-6">Cancha 6 - Maracaná Nocturno (F11)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Contenedor dinámico de vistas -->
+      <div id="cal-contenedor-vista">
+        <!-- Renderizado por js/admin.js -->
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SECCIÓN 2: CANCHAS (ALTA, EDICIÓN Y PRECIOS/HORARIOS)
+         ======================================================================= -->
+    <section id="panel-canchas" class="admin-panel-section" role="tabpanel" aria-labelledby="tab-canchas">
+      <div class="section-toolbar">
+        <div class="toolbar-title-group">
+          <h2>GESTIÓN DE CANCHAS</h2>
+          <p>Configurá las 6 canchas del predio, editá precios por hora, superficies y estados de actividad.</p>
+        </div>
+
+        <div class="toolbar-controls">
+          <button type="button" id="btn-abrir-nueva-cancha" class="btn btn-primary" style="font-size: 1.2rem;">
+            + NUEVA CANCHA
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla Responsiva de Canchas -->
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table-responsive" aria-label="Listado de canchas">
+          <caption>CANCHAS REGLAMENTARIAS REGISTRADAS</caption>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">CANCHA</th>
+              <th scope="col">TIPO / CAT</th>
+              <th scope="col">SUPERFICIE</th>
+              <th scope="col">TECHADA</th>
+              <th scope="col">PRECIO / HORA</th>
+              <th scope="col">ESTADO</th>
+              <th scope="col" style="text-align: right;">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-canchas-body">
+            <!-- Inyectado por js/admin.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SECCIÓN 3: BLOQUEOS DE HORARIOS
+         ======================================================================= -->
+    <section id="panel-bloqueos" class="admin-panel-section" role="tabpanel" aria-labelledby="tab-bloqueos">
+      <div class="section-toolbar">
+        <div class="toolbar-title-group">
+          <h2>BLOQUEOS DE HORARIOS</h2>
+          <p>Inhabilitá turnos por mantenimiento, tormenta o eventos privados. Los horarios bloqueados quedan no disponibles para las reservas.</p>
+        </div>
+      </div>
+
+      <!-- Formulario de Bloqueo -->
+      <div class="bloqueo-form-card">
+        <h3 style="color: var(--accent); margin-bottom: 1.25rem; font-size: 1.6rem;">NUEVO BLOQUEO ADMINISTRATIVO</h3>
+
+        <form id="form-nuevo-bloqueo" novalidate>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+            <div class="form-group">
+              <label for="bloqueo-cancha-select" class="form-label">Cancha a Bloquear *</label>
+              <select id="bloqueo-cancha-select" class="form-input" required>
+                <!-- Opciones dinámicas -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="bloqueo-fecha-input" class="form-label">Fecha del Bloqueo *</label>
+              <input type="date" id="bloqueo-fecha-input" class="form-input" required color-scheme="dark">
+            </div>
+
+            <div class="form-group">
+              <label for="bloqueo-motivo-select" class="form-label">Motivo *</label>
+              <select id="bloqueo-motivo-select" class="form-input" required>
+                <option value="Mantenimiento">Mantenimiento (Césped / Caucho / Reflectores)</option>
+                <option value="Lluvia">Lluvia / Temporal (Canchas abiertas)</option>
+                <option value="Evento privado">Evento Privado / Cumpleaños / Torneo</option>
+                <option value="Otro">Otro Motivo Administrativo</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Selección múltiple de horarios -->
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span class="form-label" style="margin-bottom: 0;">Seleccionar Horarios Operativos a Bloquear *</span>
+              <button type="button" id="btn-toggle-todos-horarios" class="btn-action-sm">
+                SELECCIONAR TODOS (14:00 - 23:00)
+              </button>
+            </div>
+
+            <div class="horarios-selector-grid" id="bloqueo-horarios-chips">
+              <!-- Chips generados por js/admin.js -->
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="bloqueo-nota-input" class="form-label">Detalle o Nota Adicional (Opcional)</label>
+            <input type="text" id="bloqueo-nota-input" class="form-input" placeholder="Ej: Cepillado semestral de sintético y reposición de arena">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="font-size: 1.25rem;">
+            APLICAR BLOQUEO 🔒
+          </button>
+        </form>
+      </div>
+
+      <!-- Listado de Bloqueos Activos -->
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table-responsive" aria-label="Listado de bloqueos activos">
+          <caption>BLOQUEOS ACTIVOS REGISTRADOS</caption>
+          <thead>
+            <tr>
+              <th scope="col">CANCHA</th>
+              <th scope="col">FECHA</th>
+              <th scope="col">HORARIOS BLOQUEADOS</th>
+              <th scope="col">MOTIVO</th>
+              <th scope="col">DETALLE</th>
+              <th scope="col" style="text-align: right;">ACCIÓN</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-bloqueos-body">
+            <!-- Inyectado por js/admin.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SECCIÓN 4: REPORTES (ESTILO MARCADOR DE ESTADIO)
+         ======================================================================= -->
+    <section id="panel-reportes" class="admin-panel-section" role="tabpanel" aria-labelledby="tab-reportes">
+      <div class="section-toolbar">
+        <div class="toolbar-title-group">
+          <h2>REPORTES DE RENDIMIENTO & OCUPACIÓN</h2>
+          <p>Métricas financieras, tasa de ocupación por cancha y rendimiento global del predio.</p>
+        </div>
+
+        <div class="toolbar-controls">
+          <div class="calendar-view-toggle" role="group" aria-label="Rango del reporte">
+            <button type="button" class="view-btn active" data-rango="semana">ESTA SEMANA</button>
+            <button type="button" class="view-btn" data-rango="mes">ESTE MES</button>
+            <button type="button" class="view-btn" data-rango="personalizado">PERSONALIZADO</button>
+          </div>
+
+          <div id="reporte-custom-range" style="display: none; align-items: center; gap: 0.5rem;">
+            <input type="date" id="rep-desde" class="input-date-picker" aria-label="Fecha desde">
+            <span style="color: var(--chalk-dim);">al</span>
+            <input type="date" id="rep-hasta" class="input-date-picker" aria-label="Fecha hasta">
+            <button type="button" id="btn-aplicar-rango-rep" class="btn-action-sm">CALCULAR</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Marcador General de Estadio: KPIs -->
+      <div class="kpis-grid" id="reporte-kpis-box">
+        <!-- Generado por js/admin.js -->
+      </div>
+
+      <!-- Gráfico de Barras CSS Puro: Ingresos por Cancha -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">INGRESOS POR CANCHA (ARS)</h3>
+          <span style="font-size: 0.85rem; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase;">
+            MARCADOR DE RECAUDACIÓN
+          </span>
+        </div>
+        <div class="chart-bars-container" id="chart-ingresos-bars">
+          <!-- Inyectado por js/admin.js -->
+        </div>
+      </div>
+
+      <!-- Gráfico de Barras CSS Puro: Ocupación por Cancha -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">TASA DE OCUPACIÓN (%)</h3>
+          <span style="font-size: 0.85rem; color: #5CDB95; letter-spacing: 0.08em; text-transform: uppercase;">
+            HORARIOS RESERVADOS / DISPONIBLES
+          </span>
+        </div>
+        <div class="chart-bars-container" id="chart-ocupacion-bars">
+          <!-- Inyectado por js/admin.js -->
+        </div>
+      </div>
+
+      <!-- Tabla Detallada por Cancha -->
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table-responsive" aria-label="Rendimiento detallado por cancha">
+          <caption>DETALLE POR CANCHA EN EL PERÍODO</caption>
+          <thead>
+            <tr>
+              <th scope="col">CANCHA</th>
+              <th scope="col">TIPO</th>
+              <th scope="col">TURNOS RESERVADOS</th>
+              <th scope="col">TURNOS DISPONIBLES</th>
+              <th scope="col">% OCUPACIÓN</th>
+              <th scope="col" style="text-align: right;">INGRESOS TOTALES</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-reporte-canchas-body">
+            <!-- Inyectado por js/admin.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       MODAL 1: DETALLE DE RESERVA (ESTILO BOLETO DE ESTADIO)
+       ========================================================================= -->
+  <div id="modal-detalle-reserva" class="modal-overlay" aria-modal="true" role="dialog"
+    aria-labelledby="modal-reserva-titulo">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="modal-reserva-titulo" class="modal-title">DETALLE OFICIAL DE RESERVA</h3>
+        <button type="button" class="modal-close-btn" id="btn-cerrar-modal-reserva" aria-label="Cerrar ventana">✕</button>
+      </div>
+      <div class="modal-body" id="modal-reserva-body">
+        <!-- Renderizado dinámico desde js/admin.js -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-modal-reserva-cerrar">CERRAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 2: ALTA / EDICIÓN DE CANCHA
+       ========================================================================= -->
+  <div id="modal-cancha-form" class="modal-overlay" aria-modal="true" role="dialog"
+    aria-labelledby="modal-cancha-titulo">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="modal-cancha-titulo" class="modal-title">EDITAR CANCHA</h3>
+        <button type="button" class="modal-close-btn" id="btn-cerrar-modal-cancha" aria-label="Cerrar ventana">✕</button>
+      </div>
+      <form id="form-cancha-modal" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="cancha-id-input">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label for="cancha-nombre-input" class="form-label">Nombre de la Cancha *</label>
+              <input type="text" id="cancha-nombre-input" class="form-input" placeholder="Ej: La Scaloneta" required>
+            </div>
+
+            <div class="form-group">
+              <label for="cancha-tipo-input" class="form-label">Tipo de Cancha *</label>
+              <select id="cancha-tipo-input" class="form-input" required>
+                <option value="Fútbol 5">Fútbol 5 (F5)</option>
+                <option value="Fútbol 7">Fútbol 7 (F7)</option>
+                <option value="Fútbol 11">Fútbol 11 (F11)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label for="cancha-precio-input" class="form-label">Precio por Hora (ARS) *</label>
+              <input type="number" id="cancha-precio-input" class="form-input" placeholder="32000" min="1000" step="1000" required>
+            </div>
+
+            <div class="form-group">
+              <label for="cancha-superficie-input" class="form-label">Superficie *</label>
+              <input type="text" id="cancha-superficie-input" class="form-input" placeholder="Césped Sintético Forbex 50mm" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label for="cancha-capacidad-input" class="form-label">Capacidad de Jugadores</label>
+              <input type="text" id="cancha-capacidad-input" class="form-input" placeholder="10 jugadores (5 vs 5)">
+            </div>
+
+            <div class="form-group">
+              <label for="cancha-medidas-input" class="form-label">Medidas</label>
+              <input type="text" id="cancha-medidas-input" class="form-input" placeholder="30 x 18 m">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="cancha-iluminacion-input" class="form-label">Sistema Lumínico</label>
+            <input type="text" id="cancha-iluminacion-input" class="form-input" placeholder="Reflectores LED 400W">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+            <input type="checkbox" id="cancha-techada-input" style="width: 20px; height: 20px; accent-color: var(--accent);">
+            <label for="cancha-techada-input" style="color: var(--chalk); font-weight: 600; cursor: pointer;">
+              Cancha Techada (Tinglado protector contra lluvia)
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancelar-cancha">CANCELAR</button>
+          <button type="submit" class="btn btn-primary">GUARDAR CANCHA ⚽</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast de Notificación Accesible -->
+  <div id="admin-toast" class="admin-toast" role="status" aria-live="polite"></div>
+
+  <!-- Pie de página -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border: none; padding: 0;">
+        <div>&copy; 2026 El Potrero Fútbol Club. Módulo de Administración.</div>
+        <div style="color: var(--accent); font-family: var(--font-display);">PANEL DE CONTROL INTERNO</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="../js/canchas.js"></script>
+  <script src="js/admin-datos.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+
+</html>
