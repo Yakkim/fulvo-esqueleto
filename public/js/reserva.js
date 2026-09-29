@@ -318,7 +318,7 @@ function seleccionarDia(indice) {
 /**
  * Renderiza la grilla de horarios estilo marcador de estadio (14:00 a 23:00)
  */
-function renderizarTableroHorarios() {
+async function renderizarTableroHorarios() {
   const container = document.getElementById('horarios-grid-box');
   const infoCanchaHeader = document.getElementById('tablero-cancha-nombre');
   if (!container) return;
@@ -327,8 +327,8 @@ function renderizarTableroHorarios() {
     infoCanchaHeader.textContent = `${reservaState.canchaObj.nombre} • ${reservaState.fechaObj.textoCompleto}`;
   }
 
-  // TODO: reemplazar por fetch a /api/horarios-disponibles?cancha=${canchaId}&fecha=${fechaISO}
-  const slots = obtenerHorariosDisponibles(reservaState.canchaId, reservaState.fechaObj.isoFecha);
+  // Obtener disponibilidad real desde la API (con fallback a mock)
+  const slots = await obtenerHorariosDisponibles(reservaState.canchaId, reservaState.fechaObj.isoFecha);
 
   container.innerHTML = slots.map(slot => {
     const esSeleccionado = reservaState.horaSeleccionada === slot.hora;

@@ -1,105 +1,60 @@
 /**
- * EL POTRERO - Datos Mock de Canchas y Utilidades
- * 
- * Este archivo contiene la información de las 6 canchas del predio
- * y funciones de consulta para el flujo de reservas.
- * 
- * TODO: En la siguiente fase, estos datos se obtendrán mediante:
- * fetch('https://api.elpotrero.com/api/canchas')
+ * EL POTRERO - Datos de Canchas y Utilidades
+ *
+ * Carga la lista de canchas desde GET /api/canchas (mismo origen).
+ * Mantiene la interfaz pública que reserva.js y el resto del frontend esperan:
+ *   window.CANCHAS, window.obtenerCanchaPorId, window.formatearPrecio, etc.
+ *
+ * Los campos que el schema D1 todavía no devuelve (superficie, medidas,
+ * techada, capacidad, iluminacion, caracteristicas) se rellenan con
+ * defaults de gracia para que las cards no rompan. Se completarán cuando
+ * se expanda el schema en la Fase 6.
  */
 
-const CANCHAS = [
-  {
-    id: 'cancha-1',
-    numero: 1,
-    nombre: 'La Bombonerita',
-    tipo: 'Fútbol 5',
-    categoria: 'F5',
-    superficie: 'Césped Sintético Forbex 50mm',
-    techada: true,
-    precioHora: 32000,
-    capacidad: '10 jugadores (5 vs 5)',
-    medidas: '30 x 18 m',
-    iluminacion: 'Reflectores LED 400W antideslumbrantes',
-    caracteristicas: ['Techada (no se suspende por lluvia)', 'Piso amortiguado', 'Pelota F5 de medio pique'],
-    descripcion: 'Cancha techada con alfombra premium de pelo alto y caucho ecológico. Ideal para jugar a máxima intensidad sin depender del clima.'
-  },
-  {
-    id: 'cancha-2',
-    numero: 2,
-    nombre: 'El Monumentalito',
-    tipo: 'Fútbol 5',
-    categoria: 'F5',
-    superficie: 'Césped Sintético Pro',
-    techada: false,
-    precioHora: 28000,
-    capacidad: '10 jugadores (5 vs 5)',
-    medidas: '32 x 20 m',
-    iluminacion: '4 Torres LED 600W de alta visibilidad',
-    caracteristicas: ['Al aire libre bajo reflectores', 'Líneas demarcadas con tiza sintética', 'Redes reglamentarias'],
-    descripcion: 'Cancha rápida al aire libre con vista al cielo nocturno. Reflectores de estadio perimetrales que garantizan visión perfecta en cada pelota dividida.'
-  },
-  {
-    id: 'cancha-3',
-    numero: 3,
-    nombre: 'El Diego',
-    tipo: 'Fútbol 7',
-    categoria: 'F7',
-    superficie: 'Césped Sintético ShockPad',
-    techada: false,
-    precioHora: 46000,
-    capacidad: '14 jugadores (7 vs 7)',
-    medidas: '50 x 30 m',
-    iluminacion: '6 Torres perimetrales de haz concentrado',
-    caracteristicas: ['Base elástica ShockPad para articulaciones', 'Arcos de hierro reforzados', 'Área de bancos de suplentes'],
-    descripcion: 'El espacio ideal para jugar con dinámica y metros para correr. Césped amortiguado de bajo impacto que cuida rodillas y tobillos.'
-  },
-  {
-    id: 'cancha-4',
-    numero: 4,
-    nombre: 'La Scaloneta',
-    tipo: 'Fútbol 7',
-    categoria: 'F7',
-    superficie: 'Sintético Premium Bicolor',
-    techada: true,
-    precioHora: 52000,
-    capacidad: '14 jugadores (7 vs 7)',
-    medidas: '52 x 32 m',
-    iluminacion: 'Sistema lumínico suspendido de alta definición',
-    caracteristicas: ['Tinglado alto con ventilación cruzada', 'Tablero digital de tanteador', 'Gradas laterales para hinchada'],
-    descripcion: 'Nuestra joya de F7 techada. Tinglado de altura profesional que permite pelotazos aéreos, marcador digital y vestuario exclusivo al costado.'
-  },
-  {
-    id: 'cancha-5',
-    numero: 5,
-    nombre: 'El Potrero Central',
-    tipo: 'Fútbol 11',
-    categoria: 'F11',
-    superficie: 'Césped Natural Profesional',
-    techada: false,
-    precioHora: 88000,
-    capacidad: '22 jugadores (11 vs 11)',
-    medidas: '95 x 62 m',
-    iluminacion: '8 Torres de estadio nivel transmisión nocturna',
-    caracteristicas: ['Césped bermuda resembrado en invierno', 'Riego por aspersión computarizado', 'Túnel de salida y bancos oficiales'],
-    descripcion: 'La experiencia definitiva de jugar en cancha grande de 11. Césped natural cuidado al detalle, líneas de cal impecables y atmósfera de final de copa.'
-  },
-  {
-    id: 'cancha-6',
-    numero: 6,
-    nombre: 'Maracaná Nocturno',
-    tipo: 'Fútbol 11',
-    categoria: 'F11',
-    superficie: 'Sintético FIFA Quality Pro',
-    techada: false,
-    precioHora: 94000,
-    capacidad: '22 jugadores (11 vs 11)',
-    medidas: '100 x 64 m',
-    iluminacion: 'Reflectores LED 1200W iluminación 360°',
-    caracteristicas: ['Homologación FIFA Quality', 'Drenaje rápido antihumedad', 'Banderines de córner flexibles oficiales'],
-    descripcion: 'Dimensiones oficiales y césped sintético de densidad máxima. Perfecta para torneos competitivos, ligas nocturnas y partidos con amigos de pierna fuerte.'
+let CANCHAS = [];
+
+/**
+ * Carga las canchas desde la API y las deja en window.CANCHAS.
+ * Devuelve el array resultante. Si la API falla, deja CANCHAS = [] y loguea el error.
+ * @returns {Promise<Array>}
+ */
+async function cargarCanchas() {
+  try {
+    const res = await fetch('/api/canchas');
+    if (!res.ok) {
+      throw new Error(`API respondió ${res.status}`);
+    }
+    const data = await res.json();
+    const lista = data.canchas || [];
+
+    // Mapear al shape que reserva.js ya espera
+    CANCHAS = lista.map(c => ({
+      id:              c.id,
+      nombre:          c.nombre          || 'Sin nombre',
+      tipo:            c.tipo            || '',
+      descripcion:     c.descripcion     || '',
+      precioHora:      c.precio_hora     || 0,
+      imagen_url:      c.imagen_url      || '',
+      // Campos que D1 aún no tiene — defaults de gracia (Fase 6 los completa)
+      numero:          c.numero          || '—',
+      categoria:       c.categoria       || c.tipo || '',
+      superficie:      c.superficie      || '—',
+      techada:         c.techada         ?? false,
+      capacidad:       c.capacidad       || '—',
+      medidas:         c.medidas         || '—',
+      iluminacion:     c.iluminacion     || '—',
+      caracteristicas: c.caracteristicas || []
+    }));
+
+    window.CANCHAS = CANCHAS;
+    return CANCHAS;
+  } catch (err) {
+    console.error('Error al cargar canchas desde la API:', err);
+    CANCHAS = [];
+    window.CANCHAS = CANCHAS;
+    return CANCHAS;
   }
-];
+}
 
 // Horarios de funcionamiento de las canchas (de 14:00 a 23:00)
 const HORARIOS_OPERATIVOS = [
@@ -126,25 +81,16 @@ function formatearPrecio(valor) {
  * @returns {Object|null}
  */
 function obtenerCanchaPorId(id) {
-  return CANCHAS.find(cancha => cancha.id === id) || null;
+  // == intencional: el id puede venir como int (API) o string (URL param)
+  return CANCHAS.find(cancha => cancha.id == id) || null;
 }
 
-/**
- * Genera de forma determinística la ocupación de horarios para una cancha y fecha específica.
- * Sin backend real, asegura que los mismos horarios aparezcan ocupados para una combinación dada.
- * 
- * TODO: reemplazar por fetch a /api/horarios-disponibles?cancha=${canchaId}&fecha=${fechaISO}
- * 
- * @param {string} canchaId 
- * @param {string} fechaStr (formato YYYY-MM-DD o clave del día)
- * @returns {Array<{hora: string, disponible: boolean, etiqueta: string}>}
- */
 /**
  * Lee los bloqueos administrativos guardados por el panel (localStorage).
  * Devuelve un array vacío si todavía no hay bloqueos o si algo falla.
  *
- * TODO: cuando exista backend real, esto deja de leer localStorage y pasa
- * a venir directo de la misma respuesta de /api/horarios-disponibles
+ * Se usa SOLO como parte del fallback cuando la API no responde.
+ * En Fase 6, los bloqueos vendrán de la tabla D1 y esto se elimina.
  */
 function obtenerBloqueosGuardados(canchaId, fechaStr) {
   try {
@@ -157,20 +103,12 @@ function obtenerBloqueosGuardados(canchaId, fechaStr) {
 }
 
 /**
- * Genera la disponibilidad de horarios para una cancha y fecha específica,
- * cruzando primero contra los bloqueos administrativos reales guardados por
- * el panel, y usando el mock determinístico solo como relleno para el resto.
- *
- * TODO: reemplazar por fetch a /api/horarios-disponibles?cancha=${canchaId}&fecha=${fechaISO}
- *
- * @param {string} canchaId 
- * @param {string} fechaStr (formato YYYY-MM-DD)
- * @returns {Array<{hora: string, disponible: boolean, etiqueta: string, motivo?: string}>}
+ * Mock determinístico de disponibilidad — fallback cuando la API falla.
+ * Se eliminará por completo cuando la API sea estable.
  */
-function obtenerHorariosDisponibles(canchaId, fechaStr) {
+function fallbackHorariosMock(canchaId, fechaStr) {
   const bloqueos = obtenerBloqueosGuardados(canchaId, fechaStr);
 
-  // Hash determinístico simple basado en canchaId + fechaStr (igual que antes)
   const semillaStr = `${canchaId}-${fechaStr}`;
   let hash = 0;
   for (let i = 0; i < semillaStr.length; i++) {
@@ -178,32 +116,50 @@ function obtenerHorariosDisponibles(canchaId, fechaStr) {
   }
 
   return HORARIOS_OPERATIVOS.map((hora, indice) => {
-    // 1. Si está bloqueado desde el panel, gana siempre esto
     const bloqueo = bloqueos.find(b => b.horarios.includes(hora));
     if (bloqueo) {
-      return {
-        hora,
-        disponible: false,
-        etiqueta: 'OCUPADO',
-        motivo: bloqueo.motivo
-      };
+      return { hora, disponible: false, etiqueta: 'OCUPADO', motivo: bloqueo.motivo };
     }
 
-    // 2. Si no está bloqueado, seguimos con el mock determinístico de siempre
     const horaNum = parseInt(hora.split(':')[0], 10);
     const esHorarioPico = horaNum >= 20 && horaNum <= 22;
-
     const pseudoRandom = Math.sin(hash + indice * 17) * 10000;
     const factor = pseudoRandom - Math.floor(pseudoRandom);
-
     const ocupado = esHorarioPico ? (factor > 0.35) : (factor > 0.65);
 
-    return {
-      hora,
-      disponible: !ocupado,
-      etiqueta: ocupado ? 'OCUPADO' : 'LIBRE'
-    };
+    return { hora, disponible: !ocupado, etiqueta: ocupado ? 'OCUPADO' : 'LIBRE' };
   });
+}
+
+/**
+ * Obtiene la disponibilidad real de horarios desde la API.
+ * Devuelve el formato que reserva.js espera:
+ *   { hora, disponible, etiqueta: 'LIBRE'|'OCUPADO' }
+ *
+ * Si la API falla, usa el mock determinístico como fallback.
+ *
+ * @param {string|number} canchaId
+ * @param {string} fechaStr (formato YYYY-MM-DD)
+ * @returns {Promise<Array<{hora: string, disponible: boolean, etiqueta: string}>>}
+ */
+async function obtenerHorariosDisponibles(canchaId, fechaStr) {
+  try {
+    const res = await fetch(`/api/disponibilidad?cancha_id=${canchaId}&fecha=${fechaStr}`);
+    if (!res.ok) {
+      throw new Error(`API respondió ${res.status}`);
+    }
+    const data = await res.json();
+    const franjas = data.disponibilidad || [];
+
+    return franjas.map(slot => ({
+      hora:       slot.hora,
+      disponible: slot.disponible,
+      etiqueta:   slot.disponible ? 'LIBRE' : 'OCUPADO'
+    }));
+  } catch (err) {
+    console.warn('Error al consultar disponibilidad, usando fallback mock:', err);
+    return fallbackHorariosMock(canchaId, fechaStr);
+  }
 }
 
 // Exportación compatible con navegador y módulos si fuera necesario
@@ -213,4 +169,5 @@ if (typeof window !== 'undefined') {
   window.formatearPrecio = formatearPrecio;
   window.obtenerCanchaPorId = obtenerCanchaPorId;
   window.obtenerHorariosDisponibles = obtenerHorariosDisponibles;
+  window.cargarCanchas = cargarCanchas;
 }
