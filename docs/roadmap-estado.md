@@ -8,7 +8,8 @@ Reestructuración del repo, wrangler.toml, src/index.js esqueleto, .gitignore.
 ### Fase 1 — Schema D1 (COMPLETA)
 Tablas tenants/canchas/reservas creadas, con columnas de branding en tenants
 (logo_url, color_primario, color_secundario, slogan, whatsapp_contacto, direccion).
-Seed de prueba: tenant "cancha-norte" ("El Potrero").
+Seed de prueba inicial: tenant "cancha-norte". Reemplazado en Fase 6 por el
+seed real de "El Potrero".
 
 ### Fase 2 — Bindings (COMPLETA)
 Bucket R2 flexicanchas-imagenes, widget Turnstile, .dev.vars para secrets locales,
@@ -19,25 +20,49 @@ Resolución de tenant por subdominio con cache en memoria (TTL 5 min, para no
 agotar el límite diario gratuito de lecturas de D1). run_worker_first para
 /api/* y /gestion/*.
 
-### Fase 4 — API pública (PARCIAL)
-Endpoints backend probados y funcionando:
-- GET /api/canchas
-- GET /api/canchas/:id
-- GET /api/disponibilidad?cancha_id=X&fecha=YYYY-MM-DD
+### Fase 4 — API pública (COMPLETA)
+- [x] GET /api/canchas
+- [x] GET /api/canchas/:id
+- [x] GET /api/disponibilidad
+- [x] Conectar public/js/canchas.js al API real (verificado por código y Network tab)
+- [x] Conectar tablero de horarios en reservar.html
 
-PENDIENTE: conectar public/js/canchas.js y public/js/reserva.js (que hoy usan
-datos mock hardcodeados) a estos endpoints reales.
+### Fase 6 — Autenticación admin (COMPLETA)
+Hecha antes que la Fase 5 por el colaborador, en paralelo.
 
-## Hallazgo importante: panel de admin ya existe
+1. [x] Schema D1 completo:
+   - Migración 0003: columnas numero, categoria, superficie, techada,
+     capacidad, medidas, iluminacion en canchas; metodo_pago, notas en
+     reservas; tabla bloqueos creada.
+   - Migración 0004: seed real de "El Potrero" (branding + 6 canchas
+     completas).
+
+2. [x] Credenciales hardcodeadas eliminadas de public/admin/index.html.
+   Página de login dedicada en public/admin/login.html.
+
+3. [x] Auth server-side implementada:
+   - Migración 0005_admin_auth.sql (admin_usuario, admin_password_hash,
+     admin_password_salt).
+   - Web Crypto PBKDF2-HMAC-SHA256 (100k iteraciones, salt 16B, dklen 32B).
+   - HMAC-SHA256 para firma de sesión (cookie HttpOnly
+     `potrero_admin_session`, 8 horas).
+   - Gate server-side en Worker para `/admin/*` con redirección 302 a
+     `/admin/login.html`.
+   - fetch('/api/auth/login', { method: 'POST' })  -> implementado
+   - fetch('/api/auth/logout')                       -> implementado
+
+   Nota: requiere SESSION_SECRET propio en .dev.vars de cada desarrollador
+   (no viaja por git). Cada uno puede tener un valor distinto en local.
+
+## Panel de admin: contexto y contrato de API pendiente
 
 El colaborador construyó un panel de admin funcional en public/admin/
 (index.html, css/admin.css, js/admin.js, js/admin-datos.js) con 4 módulos:
-Calendario, Canchas, Bloqueos, Reportes. Todo funciona sobre localStorage
-como mock de base de datos, con comentarios TODO que ya indican el contrato
-de API esperado:
+Calendario, Canchas, Bloqueos, Reportes. Hoy los módulos de Canchas/Bloqueos/
+Reportes siguen funcionando sobre localStorage como mock; los TODOs del
+código ya indican el contrato de API esperado para cuando se conecten en
+la Fase 7:
 
-- fetch('/api/auth/login', { method: 'POST' })
-- fetch('/api/auth/logout')
 - fetch('/api/canchas', { method: 'POST/PUT' })
 - fetch('/api/canchas/:id/toggle')
 - fetch('/api/bloqueos', { method: 'POST' })
@@ -45,37 +70,57 @@ de API esperado:
 - fetch('/api/reservas/:id/estado', { method: 'PATCH' })
 - fetch('/api/reportes?rango=...')
 
-## 3 issues a resolver en Fase 6 (antes de conectar el admin real)
+## Fases pendientes
 
-1. Schema D1 incompleto:
-   - Tabla canchas le faltan: numero, categoria, superficie, techada,
-     capacidad, medidas, iluminacion
-   - Tabla reservas le faltan: metodo_pago, notas
-   - No existe tabla bloqueos (cancha_id, fecha, horarios, motivo, nota)
+### Fase 5 — Reservas (EN CURSO)
+- [ ] POST /api/reservas
+- [ ] Validación de solapamiento de horarios
+- [ ] Validación contra tabla bloqueos
+- [ ] Turnstile en el formulario de reservar.html
 
-2. Credenciales hardcodeadas eliminadas de public/admin/index.html.
-   Página de login dedicada creada en public/admin/login.html.
+### Fase 7 — Panel de administración conectado a datos reales (PENDIENTE)
+- [ ] CRUD de canchas (POST/PUT/toggle) contra D1
+- [ ] CRUD de bloqueos (POST/DELETE) contra D1
+- [ ] PATCH estado de reserva
+- [ ] Endpoint de reportes (KPIs, ocupación, ingresos)
+- [ ] Reemplazar localStorage por fetch real en admin-datos.js
 
-3. Auth server-side implementada:
-   - Migración 0005_admin_auth.sql (columnas admin_usuario, admin_password_hash, admin_password_salt).
-   - Web Crypto PBKDF2-HMAC-SHA256 (100k iteraciones, salt 16B, dklen 32B).
-   - HMAC-SHA256 para firma de sesión (cookie HttpOnly `potrero_admin_session`, 8 horas).
-   - Gate server-side en Worker para `/admin/*` con redirección 302 a `/admin/login.html`.
-   - Botón de cierre de sesión conectado a POST `/api/auth/logout`.
+### Fase 8 — Imágenes con R2
+- [ ] Endpoint de upload de imágenes de canchas
+- [ ] Servir imágenes públicas vía Worker o binding directo a R2
 
-## Fases pendientes (5 a 14)
+### Fase 9 — Mercado Pago
+- [ ] Crear preferencia de pago al reservar
+- [ ] Webhook de confirmación de pago
+- [ ] Actualizar estado de reserva según pago
 
-5. Reservas (POST /api/reservas, validación de solapamiento, Turnstile)
-6. Autenticación admin (server-side real)
-7. Panel de administración conectado a datos reales
-8. Imágenes con R2
-9. Mercado Pago
-10. Cron Triggers (liberar reservas pendientes vencidas)
-11. Seguridad (rate limiting, aislamiento multi-tenant, CORS)
-12. Testing
-13. DNS/SSL multi-tenant (wildcard *.tudominio.com.ar)
-14. Deploy y operación post-lanzamiento
+### Fase 10 — Cron Triggers
+- [ ] Liberar reservas pendientes vencidas (timeout de pago)
+
+### Fase 11 — Seguridad
+- [ ] Rate limiting en endpoints públicos
+- [ ] Aislamiento multi-tenant verificado en cada query
+- [ ] Revisión de CORS
+
+### Fase 12 — Testing
+- [ ] Tests de endpoints críticos
+- [ ] Test de aislamiento multi-tenant
+- [ ] Test manual de flujo completo (reserva + pago)
+
+### Fase 13 — DNS/SSL multi-tenant
+- [ ] Dominio propio en Cloudflare
+- [ ] Wildcard subdomain (*.tudominio.com.ar)
+- [ ] Sumar dominio real + wildcard al widget de Turnstile
+
+### Fase 14 — Deploy y operación post-lanzamiento
+- [ ] Deploy a producción (wrangler deploy)
+- [ ] wrangler secret put TURNSTILE_SECRET_KEY --env production
+- [ ] wrangler secret put SESSION_SECRET --env production
+- [ ] Monitoreo de errores/logs
+- [ ] Backups periódicos de D1
 
 ## Formato de trabajo preferido
 Guía paso a paso, con comandos exactos de PowerShell, contenido completo de
-archivos, y verificación antes de avanzar de fase.
+archivos, y verificación antes de avanzar de fase. Implementación vía
+Antigravity (prompts sugeridos en el chat), revisión de plan antes de
+ejecutar.
