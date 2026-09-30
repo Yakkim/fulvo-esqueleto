@@ -19,12 +19,17 @@ export default {
       return manejarApi(request, env, tenant, pathname);
     }
 
-    // 3. Rutas de administración
+    // 3. Rutas de administración (legacy / pendiente)
     if (pathname.startsWith("/gestion/")) {
       return manejarGestion(request, env, tenant, pathname);
     }
 
-    // 4. Cualquier otra ruta: la maneja Static Assets
+    // 4. Panel de administración /admin/* (server-side gate)
+    if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+      return manejarAdmin(request, env, tenant, pathname);
+    }
+
+    // 5. Cualquier otra ruta: la maneja Static Assets
     return env.ASSETS.fetch(request);
   }
 };
@@ -88,6 +93,16 @@ async function manejarApi(request, env, tenant, pathname) {
     return obtenerDisponibilidad(env, tenant, canchaId, fecha);
   }
 
+  // POST /api/auth/login
+  if (pathname === "/api/auth/login" && request.method === "POST") {
+    return loginAdmin(request, env, tenant);
+  }
+
+  // POST /api/auth/logout
+  if (pathname === "/api/auth/logout" && request.method === "POST") {
+    return logoutAdmin();
+  }
+
   return jsonResponse({ error: "Ruta de API no encontrada" }, 404);
 }
 
@@ -96,7 +111,10 @@ async function manejarApi(request, env, tenant, pathname) {
 // ============================================
 async function listarCanchas(env, tenant) {
   const { results } = await env.DB.prepare(
-    "SELECT id, nombre, tipo, descripcion, precio_hora, imagen_url FROM canchas WHERE tenant_id = ? AND activa = 1"
+    `SELECT id, nombre, tipo, categoria, numero, descripcion, precio_hora, imagen_url,
+            superficie, techada, capacidad, medidas, iluminacion
+     FROM canchas WHERE tenant_id = ? AND activa = 1
+     ORDER BY numero`
   ).bind(tenant.id).all();
 
   return jsonResponse({ canchas: results });
@@ -104,7 +122,9 @@ async function listarCanchas(env, tenant) {
 
 async function obtenerCancha(env, tenant, canchaId) {
   const cancha = await env.DB.prepare(
-    "SELECT id, nombre, tipo, descripcion, precio_hora, imagen_url FROM canchas WHERE id = ? AND tenant_id = ? AND activa = 1"
+    `SELECT id, nombre, tipo, categoria, numero, descripcion, precio_hora, imagen_url,
+            superficie, techada, capacidad, medidas, iluminacion
+     FROM canchas WHERE id = ? AND tenant_id = ? AND activa = 1`
   ).bind(canchaId, tenant.id).first();
 
   if (!cancha) {
@@ -174,4 +194,246 @@ function jsonResponse(data, status = 200) {
 
 async function manejarGestion(request, env, tenant, pathname) {
   return new Response("Panel de gestion (pendiente Fase 6/7)", { status: 200 });
+}
+
+// ============================================
+// Gate de Administración (/admin/*)
+// ============================================
+async function manejarAdmin(request, env, tenant, pathname) {
+  // Si pathname es exactamente /admin/login.html, /admin/login, o empieza con /admin/css/ o /admin/js/ o /admin/assets/
+  // -> servir directo con env.ASSETS.fetch(request), sin chequeo (son estáticos, no sensibles)
+  if (
+    pathname === "/admin/login.html" ||
+    pathname === "/admin/login" ||
+    pathname.startsWith("/admin/css/") ||
+    pathname.startsWith("/admin/js/") ||
+    pathname.startsWith("/admin/assets/")
+  ) {
+    return env.ASSETS.fetch(request);
+  }
+
+  // Para cualquier otro pathname bajo /admin/ (típicamente /admin/ o /admin/index.html)
+  // -> llamar requireAuth(); si es true, env.ASSETS.fetch(request); si es false, redirect 302 a /admin/login.html
+  const estaAutenticado = await requireAuth(request, env, tenant);
+  if (estaAutenticado) {
+    if (pathname === "/admin") {
+      return Response.redirect(new URL("/admin/index.html", request.url), 302);
+    }
+    return env.ASSETS.fetch(request);
+  }
+
+  return Response.redirect(new URL("/admin/login.html", request.url), 302);
+}
+
+// ============================================
+// Endpoints de Autenticación
+// ============================================
+async function loginAdmin(request, env, tenant) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Usuario o contraseña incorrectos" }, 401);
+  }
+
+  const { usuario, password } = body || {};
+  if (!usuario || !password) {
+    return jsonResponse({ error: "Usuario o contraseña incorrectos" }, 401);
+  }
+
+  if (!tenant.admin_usuario || tenant.admin_usuario !== usuario) {
+    return jsonResponse({ error: "Usuario o contraseña incorrectos" }, 401);
+  }
+
+  const valido = await verificarPassword(
+    password,
+    tenant.admin_password_salt,
+    tenant.admin_password_hash
+  );
+
+  if (!valido) {
+    return jsonResponse({ error: "Usuario o contraseña incorrectos" }, 401);
+  }
+
+  const exp = Math.floor(Date.now() / 1000) + 28800; // 8 horas
+  const secret = env.SESSION_SECRET || "";
+  const token = await firmarSesion({ tenant_id: tenant.id, exp }, secret);
+
+  const isDev = env.ENVIRONMENT === "development";
+  const secureFlag = isDev ? "" : "; Secure";
+  const cookieHeader = `potrero_admin_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=28800${secureFlag}`;
+
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": cookieHeader
+    }
+  });
+}
+
+function logoutAdmin() {
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": "potrero_admin_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"
+    }
+  });
+}
+
+async function requireAuth(request, env, tenant) {
+  if (!env.SESSION_SECRET) return false;
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const match = cookieHeader.match(/(?:^|;\s*)potrero_admin_session=([^;]*)/);
+  if (!match) return false;
+  const token = decodeURIComponent(match[1].trim());
+  const payload = await verificarSesion(token, env.SESSION_SECRET);
+  if (!payload) return false;
+  if (payload.tenant_id !== tenant.id) return false;
+  return true;
+}
+
+// ============================================
+// Helpers de Criptografía (Web Crypto API)
+// ============================================
+function hexToBytes(hex) {
+  const cleanHex = hex.trim();
+  const bytes = new Uint8Array(cleanHex.length / 2);
+  for (let i = 0; i < cleanHex.length; i += 2) {
+    bytes[i / 2] = parseInt(cleanHex.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+function bytesToHex(buffer) {
+  const bytes = new Uint8Array(buffer);
+  return Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function base64UrlEncode(bufferOrStr) {
+  let bytes;
+  if (typeof bufferOrStr === "string") {
+    bytes = new TextEncoder().encode(bufferOrStr);
+  } else {
+    bytes = new Uint8Array(bufferOrStr);
+  }
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64UrlDecode(str) {
+  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (base64.length % 4) {
+    base64 += "=";
+  }
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+function timingSafeEqualStr(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= (a.charCodeAt(i) ^ b.charCodeAt(i));
+  }
+  return mismatch === 0;
+}
+
+async function hashPassword(password, saltHex) {
+  const enc = new TextEncoder();
+  const saltBytes = hexToBytes(saltHex);
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: saltBytes,
+      iterations: 100000,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    256 // 32 bytes = 256 bits
+  );
+  return bytesToHex(derivedBits);
+}
+
+async function verificarPassword(password, saltHex, hashEsperadoHex) {
+  if (!password || !saltHex || !hashEsperadoHex) return false;
+  const hashCalculadoHex = await hashPassword(password, saltHex);
+  return timingSafeEqualStr(hashCalculadoHex.toLowerCase(), hashEsperadoHex.toLowerCase());
+}
+
+async function firmarSesion(payload, secret) {
+  const payloadB64 = base64UrlEncode(JSON.stringify(payload));
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    enc.encode(payloadB64)
+  );
+  const firmaB64 = base64UrlEncode(signatureBuffer);
+  return `${payloadB64}.${firmaB64}`;
+}
+
+async function verificarSesion(cookieValue, secret) {
+  if (!cookieValue || !secret || !cookieValue.includes(".")) return null;
+  const parts = cookieValue.split(".");
+  if (parts.length !== 2) return null;
+  const [payloadB64, firmaB64] = parts;
+
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    enc.encode(payloadB64)
+  );
+  const firmaCalculadaB64 = base64UrlEncode(signatureBuffer);
+
+  if (!timingSafeEqualStr(firmaB64, firmaCalculadaB64)) {
+    return null;
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(base64UrlDecode(payloadB64));
+  } catch {
+    return null;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (!payload.exp || payload.exp <= now) {
+    return null;
+  }
+
+  return payload;
 }

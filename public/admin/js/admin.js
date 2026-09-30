@@ -22,14 +22,28 @@ const adminState = {
   reporteHasta: null
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   inicializarAutenticacion();
+  inicializarModales();
+
+  // ── Paso crítico: esperar a que las canchas reales lleguen de la API ──
+  // cargarCanchas() llena window.CANCHAS con datos de /api/canchas.
+  // Todas las secciones (calendario, canchas, bloqueos, reportes) dependen
+  // de esta lista para renderizar. Sin este await, ven un array vacío.
+  try {
+    await cargarCanchas();
+  } catch (err) {
+    console.error('Error cargando canchas de la API:', err);
+  }
+
+  // Actualizar dinámicamente el filtro de canchas del calendario
+  poblarFiltroCanchasCalendario();
+
   inicializarNavegacionTabs();
   inicializarModuloCalendario();
   inicializarModuloCanchas();
   inicializarModuloBloqueos();
   inicializarModuloReportes();
-  inicializarModales();
 
   // Escuchar hash de URL para navegación directa (ej: #canchas)
   const hash = window.location.hash.replace('#', '');
@@ -38,52 +52,43 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+/**
+ * Rellena el <select> de filtro de canchas del calendario con las canchas
+ * reales cargadas de la API, en lugar de depender de opciones hardcodeadas.
+ */
+function poblarFiltroCanchasCalendario() {
+  const select = document.getElementById('cal-filtro-cancha');
+  if (!select) return;
+
+  const canchas = window.CANCHAS || [];
+  select.innerHTML = `<option value="todas">TODAS LAS CANCHAS (${canchas.length})</option>`;
+  canchas.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = `${c.nombre} (${c.tipo || c.categoria || ''})`;
+    select.appendChild(opt);
+  });
+}
+
 // ============================================================================
-// 1. AUTENTICACIÓN PLACEHOLDER
-// // TODO: reemplazar por autenticación real contra el backend antes de producción
+// 1. AUTENTICACIÓN ADMIN (SERVER-SIDE)
 // ============================================================================
 
 function inicializarAutenticacion() {
-  const overlay = document.getElementById('login-overlay');
-  const form = document.getElementById('form-login');
-  const errorBox = document.getElementById('login-error');
   const btnLogout = document.getElementById('btn-logout');
 
-  // Verificar sesión persistida
-  // TODO: reemplazar por verificación de cookie de sesión o JWT en Cloudflare Workers
-  const estaAutenticado = localStorage.getItem('elpotrero_admin_auth') === 'true';
-
-  if (!estaAutenticado) {
-    overlay.style.display = 'flex';
-  } else {
-    overlay.style.display = 'none';
-  }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const usuario = document.getElementById('login-usuario').value.trim();
-    const password = document.getElementById('login-password').value.trim();
-
-    // Validación contra valor fijo de prueba
-    // TODO: reemplazar por fetch('https://api.elpotrero.com/api/auth/login', { method: 'POST', body: ... })
-    if (usuario === 'admin' && password === 'potrero2026') {
-      localStorage.setItem('elpotrero_admin_auth', 'true');
-      overlay.style.display = 'none';
-      errorBox.style.display = 'none';
-      form.reset();
-      mostrarToast('⚽ ¡Bienvenido al Panel de Administración de El Potrero!');
-    } else {
-      errorBox.textContent = 'Usuario o contraseña incorrectos. Verificá los datos e intentá nuevamente.';
-      errorBox.style.display = 'block';
-    }
-  });
-
   if (btnLogout) {
-    btnLogout.addEventListener('click', () => {
-      // TODO: reemplazar por fetch('https://api.elpotrero.com/api/auth/logout')
-      localStorage.removeItem('elpotrero_admin_auth');
-      overlay.style.display = 'flex';
-      mostrarToast('Sesión cerrada correctamente.');
+    btnLogout.addEventListener('click', async () => {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+      } catch (err) {
+        console.error('Error al cerrar sesión:', err);
+      } finally {
+        window.location.href = '/admin/login.html';
+      }
     });
   }
 }

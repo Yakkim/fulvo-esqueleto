@@ -53,13 +53,15 @@ de API esperado:
    - Tabla reservas le faltan: metodo_pago, notas
    - No existe tabla bloqueos (cancha_id, fecha, horarios, motivo, nota)
 
-2. Credenciales hardcodeadas en public/admin/index.html
-   (usuario: admin / contraseña: potrero2026) — hay que borrarlas antes de
-   producción.
+2. Credenciales hardcodeadas eliminadas de public/admin/index.html.
+   Página de login dedicada creada en public/admin/login.html.
 
-3. Auth actual es falsa: solo escribe localStorage.setItem('elpotrero_admin_auth',
-   'true'). Se bypassea desde la consola del navegador. Necesita reemplazo
-   por auth server-side real (cookie firmada o JWT verificado por el Worker).
+3. Auth server-side implementada:
+   - Migración 0005_admin_auth.sql (columnas admin_usuario, admin_password_hash, admin_password_salt).
+   - Web Crypto PBKDF2-HMAC-SHA256 (100k iteraciones, salt 16B, dklen 32B).
+   - HMAC-SHA256 para firma de sesión (cookie HttpOnly `potrero_admin_session`, 8 horas).
+   - Gate server-side en Worker para `/admin/*` con redirección 302 a `/admin/login.html`.
+   - Botón de cierre de sesión conectado a POST `/api/auth/logout`.
 
 ## Fases pendientes (5 a 14)
 

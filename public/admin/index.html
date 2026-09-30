@@ -29,44 +29,6 @@
   <a href="#admin-main" class="skip-link">Saltar al panel de administración</a>
 
   <!-- =========================================================================
-       PANTALLA DE ACCESO PLACEHOLDER (Sin autenticación real todavía)
-       // TODO: reemplazar por autenticación real contra el backend antes de producción.
-       ========================================================================= -->
-  <div id="login-overlay" class="login-screen-overlay" style="display: none;" aria-modal="true" role="dialog"
-    aria-labelledby="login-titulo">
-    <div class="login-card">
-      <div class="login-header">
-        <div class="login-logo-icon" aria-hidden="true">⚽</div>
-        <h1 id="login-titulo" class="login-title">EL POTRERO</h1>
-        <p class="login-subtitle">Panel de Control • Acceso Administrativo</p>
-      </div>
-
-      <form id="form-login" class="login-form" novalidate>
-        <div id="login-error" class="login-error-msg" role="alert"></div>
-
-        <div class="form-group">
-          <label for="login-usuario" class="form-label">Usuario</label>
-          <input type="text" id="login-usuario" class="form-input" placeholder="admin" required autocomplete="username">
-        </div>
-
-        <div class="form-group">
-          <label for="login-password" class="form-label">Contraseña</label>
-          <input type="password" id="login-password" class="form-input" placeholder="••••••••" required
-            autocomplete="current-password">
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.3rem;">
-          INGRESAR AL PANEL ⚽
-        </button>
-
-        <div class="login-hint-box" role="note">
-          <span>ℹ️ <strong>Credenciales demo:</strong> Usuario: <code>admin</code> | Contraseña: <code>potrero2026</code></span>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- =========================================================================
        ENCABEZADO PRINCIPAL (Misma identidad que index.html y reservar.html)
        ========================================================================= -->
   <header class="site-header">
@@ -87,8 +49,8 @@
 
       <nav class="header-actions" aria-label="Acciones de cabecera">
         <div class="admin-user-pill">
-          <span>👤 ADMIN: <strong>MARTÍN</strong></span>
-          <button type="button" id="btn-logout" class="btn-logout" aria-label="Cerrar Sesión">CERRAR</button>
+          <span>👤 ADMIN: <strong>POTRERO</strong></span>
+          <button type="button" id="btn-logout" class="btn-logout" aria-label="Cerrar Sesión">CERRAR SESIÓN</button>
         </div>
         <a href="../index.html" class="btn btn-secondary" style="font-size: 1.05rem;">
           ← SITIO PÚBLICO
@@ -155,13 +117,8 @@
 
           <!-- Filtro por Cancha -->
           <select id="cal-filtro-cancha" class="cancha-filter-select" aria-label="Filtrar por cancha">
-            <option value="todas">TODAS LAS CANCHAS (6)</option>
-            <option value="cancha-1">Cancha 1 - La Bombonerita (F5)</option>
-            <option value="cancha-2">Cancha 2 - El Monumentalito (F5)</option>
-            <option value="cancha-3">Cancha 3 - El Diego (F7)</option>
-            <option value="cancha-4">Cancha 4 - La Scaloneta (F7)</option>
-            <option value="cancha-5">Cancha 5 - El Potrero Central (F11)</option>
-            <option value="cancha-6">Cancha 6 - Maracaná Nocturno (F11)</option>
+            <!-- Opciones generadas dinámicamente por poblarFiltroCanchasCalendario() -->
+            <option value="todas">TODAS LAS CANCHAS</option>
           </select>
         </div>
       </div>

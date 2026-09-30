@@ -68,14 +68,15 @@ document.addEventListener('DOMContentLoaded', () => {
   inicializarFlujoReserva();
 });
 
-function inicializarFlujoReserva() {
+async function inicializarFlujoReserva() {
   const dias = obtenerDiasDisponibles();
   reservaState.fechaObj = dias[0];
 
-  // Render inicial de canchas en Paso 1
+  // Esperar a que las canchas lleguen de la API antes de renderizar el Paso 1
+  await cargarCanchas();
   renderizarCanchasGrid();
 
-  // Escuchar parámetros de URL (ej: reservar.html?cancha=cancha-2)
+  // Escuchar parámetros de URL (ej: reservar.html?cancha=cancha_2)
   const urlParams = new URLSearchParams(window.location.search);
   const paramCancha = urlParams.get('cancha');
   if (paramCancha) {

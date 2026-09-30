@@ -312,9 +312,11 @@
   <script src="js/canchas.js"></script>
   <script>
     // Renderizado de las 6 canchas en la landing
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const grid = document.getElementById('landing-canchas-grid');
-      if (!grid || !window.CANCHAS) return;
+      if (!grid) return;
+
+      await window.cargarCanchas();
 
       grid.innerHTML = window.CANCHAS.map(cancha => {
         const badgeTechada = cancha.techada

@@ -8,19 +8,19 @@
 const STORAGE_KEYS = {
   CANCHAS: 'elpotrero_admin_canchas',
   BLOQUEOS: 'elpotrero_admin_bloqueos',
-  RESERVAS: 'elpotrero_admin_reservas',
-  AUTH: 'elpotrero_admin_auth'
+  RESERVAS: 'elpotrero_admin_reservas'
 };
 
 // Paleta de colores de acento por cancha para el calendario y reportes
 // Reutiliza e intensifica la paleta oficial (verde, oro, tiza, carbón) sin colores ajenos
+// IDs con underscore: coinciden con el formato de D1 (cancha_1 … cancha_6)
 const CANCHAS_PALETA = {
-  'cancha-1': { bg: '#1E5333', border: '#F2B705', text: '#F1F3EA', badge: '#F2B705', badgeText: '#3D2E00' }, // La Bombonerita
-  'cancha-2': { bg: '#16482B', border: '#81C784', text: '#F1F3EA', badge: '#81C784', badgeText: '#133A22' }, // El Monumentalito
-  'cancha-3': { bg: '#255C37', border: '#FFD54F', text: '#F1F3EA', badge: '#FFD54F', badgeText: '#3D2E00' }, // El Diego
-  'cancha-4': { bg: '#1B4729', border: '#A5D6A7', text: '#F1F3EA', badge: '#A5D6A7', badgeText: '#133A22' }, // La Scaloneta
-  'cancha-5': { bg: '#234E33', border: '#DCE775', text: '#F1F3EA', badge: '#DCE775', badgeText: '#283618' }, // El Potrero Central
-  'cancha-6': { bg: '#133A22', border: '#FFE082', text: '#F1F3EA', badge: '#FFE082', badgeText: '#3D2E00' }  // Maracaná Nocturno
+  'cancha_1': { bg: '#1E5333', border: '#F2B705', text: '#F1F3EA', badge: '#F2B705', badgeText: '#3D2E00' }, // La Bombonerita
+  'cancha_2': { bg: '#16482B', border: '#81C784', text: '#F1F3EA', badge: '#81C784', badgeText: '#133A22' }, // El Diego
+  'cancha_3': { bg: '#255C37', border: '#FFD54F', text: '#F1F3EA', badge: '#FFD54F', badgeText: '#3D2E00' }, // El Monumentalito
+  'cancha_4': { bg: '#1B4729', border: '#A5D6A7', text: '#F1F3EA', badge: '#A5D6A7', badgeText: '#133A22' }, // La Scaloneta
+  'cancha_5': { bg: '#234E33', border: '#DCE775', text: '#F1F3EA', badge: '#DCE775', badgeText: '#283618' }, // El Potrero Central
+  'cancha_6': { bg: '#133A22', border: '#FFE082', text: '#F1F3EA', badge: '#FFE082', badgeText: '#3D2E00' }  // Maracaná Nocturno
 };
 
 const NOMBRES_CLIENTES = [
@@ -32,42 +32,58 @@ const NOMBRES_CLIENTES = [
 ];
 
 /**
- * Inicializa los datos en localStorage si no existen
+ * Inicializa los datos en localStorage.
+ *
+ * CANCHAS: la fuente de verdad es la API (window.CANCHAS, llenado por
+ * cargarCanchas()). Cada vez que se inicializa se refresca localStorage
+ * con lo que trajo la API, para que reservas y bloqueos mock puedan
+ * referenciar los ids reales (cancha_1 … cancha_6).
+ *
+ * Si window.CANCHAS está vacío (API falló), se usa un fallback hardcoded
+ * con los ids correctos de D1.
  */
 function inicializarDatosAdmin() {
-  // 1. Canchas
-  // TODO: reemplazar por fetch('https://api.elpotrero.com/api/canchas') en producción
-  if (!localStorage.getItem(STORAGE_KEYS.CANCHAS)) {
-    const canchasBase = (typeof window.CANCHAS !== 'undefined') ? window.CANCHAS : [
-      { id: 'cancha-1', numero: 1, nombre: 'La Bombonerita', tipo: 'Fútbol 5', categoria: 'F5', superficie: 'Césped Sintético Forbex 50mm', techada: true, precioHora: 32000, capacidad: '10 jugadores', medidas: '30 x 18 m', iluminacion: 'LED 400W', activa: true },
-      { id: 'cancha-2', numero: 2, nombre: 'El Monumentalito', tipo: 'Fútbol 5', categoria: 'F5', superficie: 'Césped Sintético Pro', techada: false, precioHora: 28000, capacidad: '10 jugadores', medidas: '32 x 20 m', iluminacion: 'Torres LED 600W', activa: true },
-      { id: 'cancha-3', numero: 3, nombre: 'El Diego', tipo: 'Fútbol 7', categoria: 'F7', superficie: 'Césped Sintético ShockPad', techada: false, precioHora: 46000, capacidad: '14 jugadores', medidas: '50 x 30 m', iluminacion: 'Torres 600W', activa: true },
-      { id: 'cancha-4', numero: 4, nombre: 'La Scaloneta', tipo: 'Fútbol 7', categoria: 'F7', superficie: 'Sintético Premium Bicolor', techada: true, precioHora: 52000, capacidad: '14 jugadores', medidas: '52 x 32 m', iluminacion: 'LED Alta Definición', activa: true },
-      { id: 'cancha-5', numero: 5, nombre: 'El Potrero Central', tipo: 'Fútbol 11', categoria: 'F11', superficie: 'Césped Natural Profesional', techada: false, precioHora: 88000, capacidad: '22 jugadores', medidas: '95 x 62 m', iluminacion: 'Torres Transmisión TV', activa: true },
-      { id: 'cancha-6', numero: 6, nombre: 'Maracaná Nocturno', tipo: 'Fútbol 11', categoria: 'F11', superficie: 'Sintético FIFA Quality Pro', techada: false, precioHora: 94000, capacidad: '22 jugadores', medidas: '100 x 64 m', iluminacion: 'Reflectores LED 1200W', activa: true }
-    ];
-    
-    // Asegurar propiedad 'activa' en cada cancha
-    const canchasIniciales = canchasBase.map(c => ({
-      ...c,
-      activa: c.activa !== undefined ? c.activa : true
-    }));
-    
-    localStorage.setItem(STORAGE_KEYS.CANCHAS, JSON.stringify(canchasIniciales));
-  }
+  // ── 1. Canchas: siempre sincronizar desde la API ──
+  const canchasApi = (Array.isArray(window.CANCHAS) && window.CANCHAS.length > 0)
+    ? window.CANCHAS
+    : null;
 
-  // 2. Bloqueos iniciales de muestra
-  // TODO: reemplazar por fetch('https://api.elpotrero.com/api/bloqueos') en producción
+  const canchasFallback = [
+    { id: 'cancha_1', numero: 1, nombre: 'La Bombonerita', tipo: 'Fútbol 5', categoria: 'F5', superficie: 'Césped Sintético Forbex 50mm', techada: true, precioHora: 32000, capacidad: '10 jugadores', medidas: '30 x 18 m', iluminacion: 'LED 400W', activa: true },
+    { id: 'cancha_2', numero: 3, nombre: 'El Diego', tipo: 'Fútbol 7', categoria: 'F7', superficie: 'Césped Sintético ShockPad', techada: false, precioHora: 46000, capacidad: '14 jugadores', medidas: '50 x 30 m', iluminacion: 'Torres 600W', activa: true },
+    { id: 'cancha_3', numero: 2, nombre: 'El Monumentalito', tipo: 'Fútbol 5', categoria: 'F5', superficie: 'Césped Sintético Pro', techada: false, precioHora: 28000, capacidad: '10 jugadores', medidas: '32 x 20 m', iluminacion: 'Torres LED 600W', activa: true },
+    { id: 'cancha_4', numero: 4, nombre: 'La Scaloneta', tipo: 'Fútbol 7', categoria: 'F7', superficie: 'Sintético Premium Bicolor', techada: true, precioHora: 52000, capacidad: '14 jugadores', medidas: '52 x 32 m', iluminacion: 'LED Alta Definición', activa: true },
+    { id: 'cancha_5', numero: 5, nombre: 'El Potrero Central', tipo: 'Fútbol 11', categoria: 'F11', superficie: 'Césped Natural Profesional', techada: false, precioHora: 88000, capacidad: '22 jugadores', medidas: '95 x 62 m', iluminacion: 'Torres Transmisión TV', activa: true },
+    { id: 'cancha_6', numero: 6, nombre: 'Maracaná Nocturno', tipo: 'Fútbol 11', categoria: 'F11', superficie: 'Sintético FIFA Quality Pro', techada: false, precioHora: 94000, capacidad: '22 jugadores', medidas: '100 x 64 m', iluminacion: 'Reflectores LED 1200W', activa: true }
+  ];
+
+  const canchasBase = canchasApi || canchasFallback;
+
+  // Asegurar propiedad 'activa' en cada cancha
+  const canchasIniciales = canchasBase.map(c => ({
+    ...c,
+    activa: c.activa !== undefined ? c.activa : true
+  }));
+
+  // Siempre sobreescribir para que refleje la API real
+  // TODO: reemplazar por fetch a la API real cuando el CRUD de canchas esté listo
+  localStorage.setItem(STORAGE_KEYS.CANCHAS, JSON.stringify(canchasIniciales));
+
+  // ── 2. Bloqueos iniciales de muestra ──
+  // Migrar bloqueos viejos con ids 'cancha-X' → 'cancha_X'
+  migrarIdsBloqueos();
+
   if (!localStorage.getItem(STORAGE_KEYS.BLOQUEOS)) {
     const hoyStr = new Date().toISOString().split('T')[0];
     const manana = new Date();
     manana.setDate(manana.getDate() + 1);
     const mananaStr = manana.toISOString().split('T')[0];
 
+    // TODO: reemplazar por fetch a /api/bloqueos en producción
     const bloqueosIniciales = [
       {
         id: 'blk-1',
-        canchaId: 'cancha-2',
+        canchaId: 'cancha_3',
         canchaNombre: 'El Monumentalito',
         fecha: hoyStr,
         horarios: ['14:00', '15:00'],
@@ -77,7 +93,7 @@ function inicializarDatosAdmin() {
       },
       {
         id: 'blk-2',
-        canchaId: 'cancha-5',
+        canchaId: 'cancha_5',
         canchaNombre: 'El Potrero Central',
         fecha: mananaStr,
         horarios: ['14:00', '15:00', '16:00'],
@@ -89,10 +105,35 @@ function inicializarDatosAdmin() {
     localStorage.setItem(STORAGE_KEYS.BLOQUEOS, JSON.stringify(bloqueosIniciales));
   }
 
-  // 3. Reservas mock realistas
-  // TODO: reemplazar por fetch('https://api.elpotrero.com/api/reservas') en producción
-  if (!localStorage.getItem(STORAGE_KEYS.RESERVAS)) {
+  // ── 3. Reservas mock realistas ──
+  // Regenerar si no existen o si contienen ids viejos (cancha-X)
+  const reservasExistentes = localStorage.getItem(STORAGE_KEYS.RESERVAS);
+  const necesitaRegenerar = !reservasExistentes ||
+    (reservasExistentes && reservasExistentes.includes('"cancha-'));
+  if (necesitaRegenerar) {
+    // TODO: reemplazar por fetch a /api/reservas en producción
     generarReservasMockIniciales();
+  }
+}
+
+/**
+ * Migra bloqueos guardados con IDs viejos (cancha-X) al formato nuevo (cancha_X).
+ * Si un bloqueo tiene un canchaId con guion, se reemplaza por underscore.
+ * Si no hay bloqueos o todos ya usan underscore, no hace nada.
+ */
+function migrarIdsBloqueos() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.BLOQUEOS);
+    if (!raw || !raw.includes('"cancha-')) return;
+
+    const bloqueos = JSON.parse(raw);
+    const migrados = bloqueos.map(b => ({
+      ...b,
+      canchaId: b.canchaId ? b.canchaId.replace('cancha-', 'cancha_') : b.canchaId
+    }));
+    localStorage.setItem(STORAGE_KEYS.BLOQUEOS, JSON.stringify(migrados));
+  } catch (e) {
+    console.warn('Error migrando IDs de bloqueos:', e);
   }
 }
 
@@ -193,6 +234,7 @@ const adminDatos = {
    * Guarda o actualiza una cancha
    * TODO: reemplazar por fetch('https://api.elpotrero.com/api/canchas', { method: 'POST'/'PUT', body: JSON.stringify(cancha) })
    */
+  // TODO: reemplazar por fetch a la API real
   guardarCancha(canchaData) {
     const canchas = this.getCanchas();
     let esNueva = false;
@@ -200,7 +242,7 @@ const adminDatos = {
     if (!canchaData.id) {
       esNueva = true;
       const nuevoIdNum = canchas.length + 1;
-      canchaData.id = `cancha-${nuevoIdNum}`;
+      canchaData.id = `cancha_${nuevoIdNum}`;
       canchaData.numero = nuevoIdNum;
       if (canchaData.activa === undefined) canchaData.activa = true;
       canchas.push(canchaData);

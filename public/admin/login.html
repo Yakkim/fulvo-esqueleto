@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Acceso al Panel de Control y Administración de El Potrero. Exclusivo para administradores del complejo.">
+  <meta name="theme-color" content="#133A22">
+  <title>Acceso Administrativo | El Potrero Fútbol Club</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+
+  <!-- Google Fonts: Bebas Neue e Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Estilos Globales del Sitio y Propios del Panel -->
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body class="admin-body" style="background-color: var(--pitch-deep); background-image: var(--stadium-grid), var(--reflector-beam); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem;">
+
+  <div class="login-card" style="width: 100%; max-width: 440px;">
+    <div class="login-header">
+      <div class="login-logo-icon" aria-hidden="true">⚽</div>
+      <h1 class="login-title">EL POTRERO</h1>
+      <p class="login-subtitle">Panel de Control • Acceso Administrativo</p>
+    </div>
+
+    <form id="form-login" class="login-form" novalidate>
+      <div id="login-error" class="login-error-msg" role="alert" style="display: none;"></div>
+
+      <div class="form-group">
+        <label for="login-usuario" class="form-label">Usuario</label>
+        <input type="text" id="login-usuario" class="form-input" placeholder="Ingresá tu usuario" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="login-password" class="form-label">Contraseña</label>
+        <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+
+      <button type="submit" id="btn-submit" class="btn btn-primary" style="width: 100%; font-size: 1.3rem;">
+        INGRESAR AL PANEL ⚽
+      </button>
+
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <a href="../index.html" style="color: var(--chalk-dim); font-size: 0.9rem; text-decoration: none; border-bottom: 1px dotted var(--chalk-dim); transition: color 0.2s ease;">
+          ← Volver al sitio público
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('form-login');
+      const errorBox = document.getElementById('login-error');
+      const submitBtn = document.getElementById('btn-submit');
+      const usuarioInput = document.getElementById('login-usuario');
+      const passwordInput = document.getElementById('login-password');
+
+      usuarioInput.focus();
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const usuario = usuarioInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!usuario || !password) {
+          errorBox.textContent = 'Completá usuario y contraseña para continuar.';
+          errorBox.style.display = 'block';
+          return;
+        }
+
+        errorBox.style.display = 'none';
+        errorBox.textContent = '';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'VERIFICANDO...';
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario, password }),
+            credentials: 'same-origin'
+          });
+
+          if (res.ok) {
+            window.location.href = '/admin/index.html';
+            return;
+          }
+
+          let errorMsg = 'Usuario o contraseña incorrectos';
+          try {
+            const data = await res.json();
+            if (data && data.error) {
+              errorMsg = data.error;
+            }
+          } catch {}
+
+          errorBox.textContent = errorMsg;
+          errorBox.style.display = 'block';
+        } catch (err) {
+          errorBox.textContent = 'Error de conexión con el servidor. Intentá nuevamente.';
+          errorBox.style.display = 'block';
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'INGRESAR AL PANEL ⚽';
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>
