@@ -73,9 +73,14 @@ la Fase 7:
 ## Fases pendientes
 
 ### Fase 5 — Reservas (EN CURSO)
-- [ ] POST /api/reservas
-- [ ] Validación de solapamiento de horarios
-- [ ] Validación contra tabla bloqueos
+- [x] POST /api/reservas
+- [x] Validación de solapamiento de horarios (probado: 201 válida, 409 solapada)
+- [x] Validación hora_inicio < hora_fin (probado: 400)
+- [x] Validación de campos requeridos (probado: 400)
+- [x] Lógica de chequeo contra tabla bloqueos implementada
+      (validación end-to-end pendiente hasta Fase 7, cuando el admin
+      cree bloqueos reales contra D1)
+- [ ] Conectar reservar.html (reserva.js) al POST real
 - [ ] Turnstile en el formulario de reservar.html
 
 ### Fase 7 — Panel de administración conectado a datos reales (PENDIENTE)
