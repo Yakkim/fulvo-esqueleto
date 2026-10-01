@@ -126,11 +126,64 @@ Registro de lo hecho en esta sesión de trabajo sobre FlexiCanchas
   confirmación entregado para pegar en Antigravity, implementación
   todavía no ejecutada/confirmada.**
 
+## 9. Fase 7 — Paso 1 confirmado, probado y cerrado
+
+- Antigravity terminó la implementación del CRUD de canchas acordado
+  en el punto 8 (POST/PUT `/api/canchas`, PATCH `/toggle`, con
+  `asegurarAdmin()` protegiendo las 3 rutas).
+- Probado con 7 casos en PowerShell (`Invoke-RestMethod`, con
+  `-WebSession` para sostener la cookie entre el login y los calls
+  siguientes):
+  1. `POST /api/canchas` sin sesión -> **401** confirmado (caso más
+     crítico: valida que el gate de auth sí se aplica a la API, no
+     solo a las páginas estáticas).
+  2. Login guardando la sesión en `$session`.
+  3. `POST /api/canchas` con sesión -> **201**, `techada` devuelto
+     como `1` (no `true`).
+  4. `PUT /api/canchas/:id` con sesión, actualizando `precio_hora` ->
+     **200**.
+  5. `PUT` enviando además `tenant_id` y `activa` (campos fuera de la
+     whitelist) -> **200**, pero verificado en D1 que esos dos campos
+     **no cambiaron** (whitelist funcionando: `precio_hora` sí se
+     actualizó a 40000, `tenant_id` siguió en `tenant_norte`, `activa`
+     siguió en `1`).
+  6. `PATCH /api/canchas/:id/toggle` con sesión -> confirmado.
+  7. `SELECT` directo en D1 confirmando el estado final de la fila.
+- Troubleshooting menor: la primera vez, un 200 OK en la Prueba 5 se
+  interpretó como "ya está validado" sin mirar el contenido guardado;
+  se aclaró que el status code no prueba nada por sí solo en ese caso
+  — lo que valida la whitelist es el `SELECT` posterior.
+- Commits hechos en orden correcto esta vez (`git status` primero,
+  código antes que roadmap): `src/index.js` con el CRUD de canchas, y
+  después `docs/roadmap-estado.md` con el ítem tildado.
+- **Fase 7 — Paso 1: completo y cerrado.**
+
+## 10. Fase 7 — Paso 2 (arrancado, no confirmado aún)
+
+- Prompt entregado para Antigravity: CRUD de bloqueos
+  (`POST /api/bloqueos`, `DELETE /api/bloqueos/:id`), reutilizando
+  `asegurarAdmin()` del Paso 1.
+- Especificado: `horarios` se guarda como `JSON.stringify(array)` en
+  la columna TEXT, se devuelve ya parseado de vuelta a array en la
+  respuesta; validación de que `cancha_id` pertenezca al tenant;
+  validación de formato de fecha/horas.
+- Aclarado explícitamente que este CRUD es independiente del chequeo
+  de bloqueos que ya usa `POST /api/reservas` desde la Fase 5 — no
+  hay que tocar ese código existente, solo alimentar la tabla que ya
+  consulta.
+- **Estado al cierre de esta sesión: prompt entregado, plan de
+  Antigravity todavía no recibido/revisado.**
+
 ## Pendientes para la próxima sesión
 
-- [ ] Confirmar y probar la implementación del Paso 1 de Fase 7
-      (CRUD de canchas + auth gate), incluyendo el caso 401 sin sesión.
-- [ ] Continuar Fase 7 — Paso 2: CRUD de bloqueos (POST/DELETE).
+- [ ] Revisar el plan que devuelva Antigravity para el Paso 2 de
+      Fase 7 (CRUD de bloqueos) antes de confirmar ejecución.
+- [ ] Probar el CRUD de bloqueos: crear, listar vía D1, borrar, y el
+      caso 401 sin sesión.
+- [ ] Probar que un bloqueo creado desde este nuevo endpoint efectivamente
+      hace que `POST /api/reservas` (Fase 5) lo rechace con 409 — esta
+      es la prueba end-to-end que había quedado pendiente desde la
+      Fase 5 por falta de datos de prueba en D1.
 - [ ] Continuar Fase 7 — Paso 3: listado de reservas + PATCH estado.
 - [ ] Continuar Fase 7 — Paso 4: endpoint de reportes + swap final de
       `admin-datos.js` (dejar de depender de `localStorage`).
