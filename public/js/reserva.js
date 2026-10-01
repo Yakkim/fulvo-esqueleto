@@ -519,7 +519,7 @@ function vincularEventosFormulario() {
 /**
  * Procesa la confirmación de la reserva y genera código oficial
  */
-function procesarConfirmacionReserva() {
+async function procesarConfirmacionReserva() {
   const inputNombre = document.getElementById('cliente-nombre');
   const inputTelefono = document.getElementById('cliente-telefono');
 
@@ -535,24 +535,59 @@ function procesarConfirmacionReserva() {
 
   reservaState.datosCliente = { nombre, telefono };
 
-  // Generar código de reserva único de estadio (ej: POTRERO-8371)
-  const numRandom = Math.floor(1000 + Math.random() * 9000);
-  reservaState.codigoReserva = `POTRERO-${numRandom}`;
+  const btnConfirmar = document.getElementById('btn-confirmar-reserva') ||
+    document.querySelector('#form-reserva-final button[type="submit"]');
+  const textoOriginal = btnConfirmar ? btnConfirmar.innerHTML : '';
 
-  // TODO: reemplazar por POST a /api/reservas
-  /*
-  fetch('/api/reservas', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(reservaState)
-  });
-  */
+  if (btnConfirmar) {
+    btnConfirmar.disabled = true;
+    btnConfirmar.textContent = 'CONFIRMANDO...';
+  }
 
-  // Renderizar la pantalla de confirmación
-  renderizarPantallaConfirmacion();
+  try {
+    const payload = {
+      cancha_id: reservaState.canchaId,
+      fecha: reservaState.fechaObj.isoFecha,
+      hora_inicio: reservaState.horaSeleccionada,
+      hora_fin: calcularHoraFin(reservaState.horaSeleccionada),
+      nombre_cliente: nombre,
+      telefono_cliente: telefono,
+      metodo_pago: reservaState.metodoPago
+    };
 
-  // Avanzar al Paso 4
-  cambiarPaso(4);
+    const res = await fetch('/api/reservas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    let data = null;
+    try {
+      data = await res.json();
+    } catch (parseErr) {
+      console.warn('No se pudo parsear la respuesta del servidor como JSON:', parseErr);
+    }
+
+    if (res.status === 201 && data && data.reserva) {
+      reservaState.codigoReserva = data.reserva.id;
+      renderizarPantallaConfirmacion();
+      cambiarPaso(4);
+    } else if (res.status === 409) {
+      mostrarAlertaPaso((data && data.error) ? data.error : 'El horario seleccionado ya no está disponible. Elegí otro horario.');
+    } else if (res.status === 400) {
+      mostrarAlertaPaso((data && data.error) ? data.error : 'Hubo un error con los datos de la reserva.');
+    } else {
+      mostrarAlertaPaso((data && data.error) ? data.error : 'Hubo un error con los datos de la reserva.');
+    }
+  } catch (err) {
+    console.error('Error de red al crear reserva:', err);
+    mostrarAlertaPaso('No se pudo conectar con el servidor. Revisá tu conexión e intentá nuevamente.');
+  } finally {
+    if (btnConfirmar) {
+      btnConfirmar.disabled = false;
+      btnConfirmar.innerHTML = textoOriginal;
+    }
+  }
 }
 
 /**

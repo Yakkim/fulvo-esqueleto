@@ -80,8 +80,11 @@ la Fase 7:
 - [x] Lógica de chequeo contra tabla bloqueos implementada
       (validación end-to-end pendiente hasta Fase 7, cuando el admin
       cree bloqueos reales contra D1)
-- [ ] Conectar reservar.html (reserva.js) al POST real
-- [ ] Turnstile en el formulario de reservar.html
+- [x] Conectar reservar.html (reserva.js) al POST real
+- [x] Probado end-to-end en navegador: reserva exitosa, horario ocupado
+      bloqueado en UI (tablero de disponibilidad), error de red manejado
+- [ ] Turnstile en el formulario de reservar.html (queda para cuando
+      se trabaje anti-spam/seguridad, no bloquea el flujo actual)
 
 ### Fase 7 — Panel de administración conectado a datos reales (PENDIENTE)
 - [ ] CRUD de canchas (POST/PUT/toggle) contra D1
