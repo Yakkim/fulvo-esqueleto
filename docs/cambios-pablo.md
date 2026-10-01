@@ -174,19 +174,81 @@ Registro de lo hecho en esta sesión de trabajo sobre FlexiCanchas
 - **Estado al cierre de esta sesión: prompt entregado, plan de
   Antigravity todavía no recibido/revisado.**
 
+## 11. Fase 7 — Paso 2 confirmado, probado y cerrado
+
+- Antigravity implementó `POST /api/bloqueos` y `DELETE
+  /api/bloqueos/:id` con `asegurarAdmin()`, más el ajuste pedido de
+  validar rango horario real (HH 00-23, MM 00-59), no solo formato.
+- Probado con 8 casos: 401 sin sesión, login, creación válida con
+  `horarios` devuelto como array real (confirmado con `.GetType()`,
+  no solo con la vista truncada de PowerShell en tabla), hora inválida
+  (400), cancha inexistente (404), verificación en D1, y las 2 pruebas
+  clave que conectan con la Fase 5:
+  - Un bloqueo real creado por este endpoint hace que
+    `POST /api/reservas` lo rechace con **409**.
+  - Al borrar el bloqueo (`DELETE`), la misma reserva pasa con **201**.
+- Troubleshooting menor: se creó sin querer un bloqueo duplicado (se
+  corrió la Prueba 3 dos veces); no es un bug, el endpoint no tiene
+  regla de "no duplicados" para bloqueos (nadie la pidió en el plan),
+  se limpió a mano con `DELETE`.
+- **Fase 7 — Paso 2: completo y cerrado. Queda cerrada también la
+  prueba end-to-end que venía pendiente desde la Fase 5.**
+
+## 12. Fase 7 — Paso 3 confirmado, probado y cerrado
+
+- Antigravity implementó `GET /api/reservas` (listado con JOIN a
+  `canchas` para traer `cancha_nombre`, filtro opcional
+  `?desde=&hasta=`) y `PATCH /api/reservas/:id/estado` (whitelist de 3
+  valores exactos: pendiente/confirmada/cancelada), ambos con
+  `asegurarAdmin()`. Plan aprobado sin pedir ajustes (ya cumplía todo
+  lo necesario, incluyendo la validación `desde <= hasta`).
+- Probado con 10 casos: 401 en ambos endpoints sin sesión, listado
+  completo con `cancha_nombre` poblado (JOIN funcionando), filtro por
+  rango de fechas, rechazo de rango invertido (400), cambio de estado
+  válido (200), estado inválido fuera de la whitelist (400), reserva
+  inexistente (404), verificación final en D1.
+- **Fase 7 — Paso 3: completo y cerrado.**
+
+## 13. Fase 7 — Paso 4a (reportes): plan aprobado, SIN ejecutar
+
+- Prompt entregado a Antigravity para `GET /api/reportes` (ingresos
+  totales, cantidad de reservas, agrupado por cancha y por estado,
+  protegido con `asegurarAdmin()`).
+- Antigravity devolvió el plan: 2 queries SQL con `GROUP BY` (una por
+  cancha excluyendo canceladas, otra por estado incluyéndolas), totales
+  generales calculados en JS a partir del resultado ya agrupado
+  (evita una tercera query a D1, cuidando el límite diario del free
+  tier). Plan revisado y **aprobado sin pedir ajustes** — el manejo de
+  `NULL` en `SUM()` ya es seguro por diseño de SQLite, no hacía falta
+  nada extra.
+- **CORTE DE SESIÓN: Pablo se quedó sin tokens de Antigravity antes de
+  poder pegarle el prompt de confirmación ("El plan está aprobado tal
+  cual está descripto. Procedé a implementar."). El plan está
+  aprobado y lo que falta es puramente ejecutarlo — no hay nada que
+  revisar de nuevo, solo repegar la confirmación cuando haya tokens.**
+- `src/index.js` **NO tiene cambios de este paso todavía** — nada que
+  commitear de reportes.
+
 ## Pendientes para la próxima sesión
 
-- [ ] Revisar el plan que devuelva Antigravity para el Paso 2 de
-      Fase 7 (CRUD de bloqueos) antes de confirmar ejecución.
-- [ ] Probar el CRUD de bloqueos: crear, listar vía D1, borrar, y el
-      caso 401 sin sesión.
-- [ ] Probar que un bloqueo creado desde este nuevo endpoint efectivamente
-      hace que `POST /api/reservas` (Fase 5) lo rechace con 409 — esta
-      es la prueba end-to-end que había quedado pendiente desde la
-      Fase 5 por falta de datos de prueba en D1.
-- [ ] Continuar Fase 7 — Paso 3: listado de reservas + PATCH estado.
-- [ ] Continuar Fase 7 — Paso 4: endpoint de reportes + swap final de
-      `admin-datos.js` (dejar de depender de `localStorage`).
+- [ ] **Primero que nada**: pegarle a Antigravity la confirmación ya
+      redactada ("El plan está aprobado tal cual está descripto.
+      Procedé a implementar.") para el endpoint `GET /api/reportes`
+      — el plan ya fue revisado y aprobado en esta sesión, no hace
+      falta re-discutirlo.
+- [ ] Probar `GET /api/reportes` (401 sin sesión, cálculo correcto de
+      ingresos_totales/cantidad_reservas, agrupado por cancha y por
+      estado, validación desde/hasta).
+- [ ] Commit de `src/index.js` con el endpoint de reportes + commit
+      del roadmap (recordar: código primero, roadmap después,
+      `git status` como chequeo).
+- [ ] Paso 4b de Fase 7 (el último paso, cierra la fase entera):
+      reemplazar `localStorage` por `fetch` real en
+      `public/admin/js/admin-datos.js`, conectando todos los endpoints
+      ya construidos en los Pasos 1 a 4 (canchas, bloqueos, reservas,
+      reportes). Es el paso más delicado de toda la Fase 7 porque toca
+      el archivo que hoy sostiene toda la UI del admin — conviene
+      pedirle el plan a Antigravity con cuidado antes de aprobar.
 - [ ] Turnstile en el formulario de `reservar.html` (quedó pendiente
       de la Fase 5, no bloqueante).
 - [ ] Unificar criterio de migraciones con el colaborador (hoy se
