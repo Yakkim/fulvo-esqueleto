@@ -24,6 +24,9 @@
 
   <!-- Estilos Globales -->
   <link rel="stylesheet" href="css/estilos.css">
+
+  <!-- Cloudflare Turnstile (render explícito) -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 
 <body>
@@ -244,6 +247,9 @@
                 Pago.
               </p>
             </fieldset>
+
+            <!-- Contenedor Turnstile Anti-Bots -->
+            <div id="turnstile-container" style="margin-top: 1.5rem; display: flex; justify-content: center;"></div>
 
             <!-- Acciones de Navegación Paso 3 -->
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: space-between;">

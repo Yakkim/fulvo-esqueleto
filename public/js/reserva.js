@@ -26,6 +26,87 @@ const reservaState = {
   codigoReserva: null
 };
 
+// Variables y estado para Cloudflare Turnstile
+let turnstileSiteKey = null;
+let turnstileWidgetId = null;
+let turnstileToken = null;
+let turnstileInicializado = false;
+
+/**
+ * Espera a que el script de Turnstile esté cargado y listo en window
+ */
+async function esperarTurnstile(maxEsperaMs = 6000) {
+  const inicio = Date.now();
+  while (typeof window.turnstile === 'undefined') {
+    if (Date.now() - inicio > maxEsperaMs) {
+      return false;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  if (typeof window.turnstile.ready === 'function') {
+    await new Promise(resolve => window.turnstile.ready(resolve));
+  }
+  return true;
+}
+
+/**
+ * Inicializa el widget de Turnstile en el Paso 3
+ */
+async function inicializarTurnstilePaso3() {
+  if (turnstileInicializado || turnstileWidgetId !== null) {
+    return;
+  }
+  turnstileInicializado = true;
+
+  if (!turnstileSiteKey) {
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        const cfg = await res.json();
+        turnstileSiteKey = cfg.turnstile_site_key;
+      }
+    } catch (err) {
+      console.error('Error al obtener /api/config para Turnstile:', err);
+    }
+  }
+
+  if (!turnstileSiteKey) {
+    turnstileInicializado = false;
+    mostrarAlertaPaso('No pudimos cargar la verificación, recargá la página');
+    return;
+  }
+
+  const turnstileListo = await esperarTurnstile(6000);
+  if (!turnstileListo || !window.turnstile) {
+    turnstileInicializado = false;
+    mostrarAlertaPaso('No pudimos cargar la verificación, recargá la página');
+    return;
+  }
+
+  const container = document.getElementById('turnstile-container');
+  if (!container) return;
+
+  try {
+    turnstileWidgetId = window.turnstile.render('#turnstile-container', {
+      sitekey: turnstileSiteKey,
+      theme: 'dark',
+      callback: function (token) {
+        turnstileToken = token;
+      },
+      'expired-callback': function () {
+        turnstileToken = null;
+      },
+      'error-callback': function () {
+        turnstileToken = null;
+      }
+    });
+  } catch (err) {
+    console.error('Error al renderizar Turnstile:', err);
+    turnstileInicializado = false;
+    mostrarAlertaPaso('No pudimos cargar la verificación, recargá la página');
+  }
+}
+
 /**
  * Fechas relativas disponibles (Hoy, Mañana, Pasado Mañana)
  */
@@ -150,6 +231,7 @@ function cambiarPaso(nuevoPaso) {
     renderizarTableroHorarios();
   } else if (nuevoPaso === 3) {
     renderizarTicketResumen();
+    inicializarTurnstilePaso3();
   }
 }
 
@@ -533,6 +615,11 @@ async function procesarConfirmacionReserva() {
     return;
   }
 
+  if (!turnstileToken) {
+    mostrarAlertaPaso('Completá la verificación para continuar');
+    return;
+  }
+
   reservaState.datosCliente = { nombre, telefono };
 
   const btnConfirmar = document.getElementById('btn-confirmar-reserva') ||
@@ -552,7 +639,8 @@ async function procesarConfirmacionReserva() {
       hora_fin: calcularHoraFin(reservaState.horaSeleccionada),
       nombre_cliente: nombre,
       telefono_cliente: telefono,
-      metodo_pago: reservaState.metodoPago
+      metodo_pago: reservaState.metodoPago,
+      turnstile_token: turnstileToken
     };
 
     const res = await fetch('/api/reservas', {
@@ -576,6 +664,10 @@ async function procesarConfirmacionReserva() {
       mostrarAlertaPaso((data && data.error) ? data.error : 'El horario seleccionado ya no está disponible. Elegí otro horario.');
     } else if (res.status === 400) {
       mostrarAlertaPaso((data && data.error) ? data.error : 'Hubo un error con los datos de la reserva.');
+    } else if (res.status === 403) {
+      mostrarAlertaPaso((data && data.error) ? data.error : 'No pudimos verificar que sos una persona. Probá de nuevo.');
+    } else if (res.status === 503) {
+      mostrarAlertaPaso((data && data.error) ? data.error : 'No pudimos validar la verificación, reintentá en unos segundos.');
     } else {
       mostrarAlertaPaso((data && data.error) ? data.error : 'Hubo un error con los datos de la reserva.');
     }
@@ -583,6 +675,15 @@ async function procesarConfirmacionReserva() {
     console.error('Error de red al crear reserva:', err);
     mostrarAlertaPaso('No se pudo conectar con el servidor. Revisá tu conexión e intentá nuevamente.');
   } finally {
+    if (window.turnstile && turnstileWidgetId !== null) {
+      try {
+        window.turnstile.reset(turnstileWidgetId);
+      } catch (resetErr) {
+        console.warn('Error al resetear Turnstile widget:', resetErr);
+      }
+    }
+    turnstileToken = null;
+
     if (btnConfirmar) {
       btnConfirmar.disabled = false;
       btnConfirmar.innerHTML = textoOriginal;

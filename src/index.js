@@ -75,6 +75,11 @@ function extraerSubdominio(hostname) {
 async function manejarApi(request, env, tenant, pathname) {
   const url = new URL(request.url);
 
+  // GET /api/config
+  if (pathname === "/api/config" && request.method === "GET") {
+    return jsonResponse({ turnstile_site_key: env.TURNSTILE_SITE_KEY || "" });
+  }
+
   // GET /api/canchas
   if (pathname === "/api/canchas" && request.method === "GET") {
     return listarCanchas(env, tenant);
@@ -451,6 +456,47 @@ async function obtenerDisponibilidad(env, tenant, canchaId, fecha) {
   return jsonResponse({ cancha_id: canchaId, fecha, disponibilidad });
 }
 
+// ============================================
+// Helper de verificación Cloudflare Turnstile
+// ============================================
+async function verificarTurnstile(token, env, ip) {
+  if (!token || typeof token !== "string") {
+    return { valid: false, error: "invalid_token" };
+  }
+
+  const secret = env.TURNSTILE_SECRET_KEY;
+  if (!secret) {
+    return { valid: false, error: "siteverify_failed" };
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("secret", secret);
+    formData.append("response", token);
+    if (ip) {
+      formData.append("remoteip", ip);
+    }
+
+    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      return { valid: false, error: "siteverify_failed" };
+    }
+
+    const data = await res.json();
+    if (data && data.success === true) {
+      return { valid: true };
+    } else {
+      return { valid: false, error: "invalid_token" };
+    }
+  } catch (err) {
+    return { valid: false, error: "siteverify_failed" };
+  }
+}
+
 async function crearReserva(request, env, tenant) {
   // 1. Parsear body
   let body;
@@ -458,6 +504,22 @@ async function crearReserva(request, env, tenant) {
     body = await request.json();
   } catch {
     return jsonResponse({ error: "Body JSON inválido" }, 400);
+  }
+
+  // 1b. Validar Turnstile antes de cualquier consulta a D1
+  const turnstileToken = body ? body.turnstile_token : null;
+  if (!turnstileToken) {
+    return jsonResponse({ error: "No pudimos verificar que sos una persona. Probá de nuevo." }, 403);
+  }
+
+  const ip = request.headers.get("CF-Connecting-IP") || undefined;
+  const verif = await verificarTurnstile(turnstileToken, env, ip);
+
+  if (!verif.valid) {
+    if (verif.error === "siteverify_failed") {
+      return jsonResponse({ error: "No pudimos validar la verificación, reintentá en unos segundos." }, 503);
+    }
+    return jsonResponse({ error: "No pudimos verificar que sos una persona. Probá de nuevo." }, 403);
   }
 
   // 2. Validar campos requeridos
