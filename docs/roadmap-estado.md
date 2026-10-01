@@ -86,8 +86,11 @@ la Fase 7:
 - [ ] Turnstile en el formulario de reservar.html (queda para cuando
       se trabaje anti-spam/seguridad, no bloquea el flujo actual)
 
-### Fase 7 — Panel de administración conectado a datos reales (PENDIENTE)
-- [ ] CRUD de canchas (POST/PUT/toggle) contra D1
+### Fase 7 — Panel de administración conectado a datos reales (En Curso)
+- [x] CRUD de canchas (POST/PUT/toggle) contra D1, con auth gate
+      (asegurarAdmin + requireAuth). Probado: 401 sin sesión, 201/200
+      con sesión, whitelist de columnas verificada contra inyección
+      de tenant_id/activa, coerción de techada a 0/1 verificada.
 - [ ] CRUD de bloqueos (POST/DELETE) contra D1
 - [ ] PATCH estado de reserva
 - [ ] Endpoint de reportes (KPIs, ocupación, ingresos)
