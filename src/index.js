@@ -103,6 +103,11 @@ async function manejarApi(request, env, tenant, pathname) {
     return logoutAdmin();
   }
 
+  // POST /api/reservas
+  if (pathname === "/api/reservas" && request.method === "POST") {
+    return crearReserva(request, env, tenant);
+  }
+
   return jsonResponse({ error: "Ruta de API no encontrada" }, 404);
 }
 
@@ -164,6 +169,126 @@ async function obtenerDisponibilidad(env, tenant, canchaId, fecha) {
   }));
 
   return jsonResponse({ cancha_id: canchaId, fecha, disponibilidad });
+}
+
+async function crearReserva(request, env, tenant) {
+  // 1. Parsear body
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Body JSON inválido" }, 400);
+  }
+
+  // 2. Validar campos requeridos
+  const { cancha_id, fecha, hora_inicio, hora_fin, nombre_cliente, telefono_cliente,
+          email_cliente, metodo_pago, notas } = body || {};
+
+  const faltantes = [];
+  if (!cancha_id)        faltantes.push("cancha_id");
+  if (!fecha)            faltantes.push("fecha");
+  if (!hora_inicio)      faltantes.push("hora_inicio");
+  if (!hora_fin)         faltantes.push("hora_fin");
+  if (!nombre_cliente)   faltantes.push("nombre_cliente");
+  if (!telefono_cliente) faltantes.push("telefono_cliente");
+
+  if (faltantes.length > 0) {
+    return jsonResponse({ error: `Campos requeridos faltantes: ${faltantes.join(", ")}` }, 400);
+  }
+
+  // 3. Validar formato fecha (YYYY-MM-DD) y hora (HH:MM)
+  const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+  const horaRegex = /^\d{2}:\d{2}$/;
+
+  if (!fechaRegex.test(fecha)) {
+    return jsonResponse({ error: "Formato de fecha inválido, usar YYYY-MM-DD" }, 400);
+  }
+  if (!horaRegex.test(hora_inicio) || !horaRegex.test(hora_fin)) {
+    return jsonResponse({ error: "Formato de hora inválido, usar HH:MM" }, 400);
+  }
+
+  // 4. Validar que hora_inicio < hora_fin
+  if (hora_inicio >= hora_fin) {
+    return jsonResponse({ error: "hora_inicio debe ser menor a hora_fin" }, 400);
+  }
+
+  // 5. Validar que la cancha exista y pertenezca al tenant
+  const cancha = await env.DB.prepare(
+    "SELECT id, precio_hora FROM canchas WHERE id = ? AND tenant_id = ? AND activa = 1"
+  ).bind(cancha_id, tenant.id).first();
+
+  if (!cancha) {
+    return jsonResponse({ error: "Cancha no encontrada" }, 404);
+  }
+
+  // 6. Generar las horas intermedias del turno pedido (hora_inicio inclusive, hora_fin exclusive)
+  const horasTurno = generarFranjas(hora_inicio, hora_fin, 60);
+
+  // 7. Chequear bloqueos administrativos
+  const { results: bloqueos } = await env.DB.prepare(
+    "SELECT horarios, motivo FROM bloqueos WHERE tenant_id = ? AND cancha_id = ? AND fecha = ?"
+  ).bind(tenant.id, cancha_id, fecha).all();
+
+  for (const bloqueo of bloqueos) {
+    let horasBloqueadas = [];
+    try {
+      horasBloqueadas = JSON.parse(bloqueo.horarios);
+    } catch {
+      continue;
+    }
+    const horaConflicto = horasTurno.find(h => horasBloqueadas.includes(h));
+    if (horaConflicto) {
+      return jsonResponse({
+        error: `Horario bloqueado por administración: ${bloqueo.motivo || "sin motivo"}`,
+        hora_bloqueada: horaConflicto
+      }, 409);
+    }
+  }
+
+  // 8. Chequear solapamiento con reservas existentes
+  //    Una reserva existente se solapa si: su hora_inicio < hora_fin pedida AND su hora_fin > hora_inicio pedida
+  const reservaExistente = await env.DB.prepare(
+    `SELECT id, hora_inicio, hora_fin FROM reservas
+     WHERE cancha_id = ? AND tenant_id = ? AND fecha = ? AND estado != 'cancelada'
+     AND hora_inicio < ? AND hora_fin > ?`
+  ).bind(cancha_id, tenant.id, fecha, hora_fin, hora_inicio).first();
+
+  if (reservaExistente) {
+    return jsonResponse({
+      error: `Horario no disponible: ya existe una reserva de ${reservaExistente.hora_inicio} a ${reservaExistente.hora_fin}`,
+      reserva_conflicto: reservaExistente.id
+    }, 409);
+  }
+
+  // 9. Generar ID y calcular monto
+  const reservaId = generarIdReserva();
+  const cantidadHoras = horasTurno.length;
+  const montoTotal = cancha.precio_hora * cantidadHoras;
+
+  // 10. INSERT
+  await env.DB.prepare(
+    `INSERT INTO reservas (id, tenant_id, cancha_id, nombre_cliente, telefono_cliente,
+       email_cliente, fecha, hora_inicio, hora_fin, estado, monto_total, metodo_pago, notas)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', ?, ?, ?)`
+  ).bind(
+    reservaId, tenant.id, cancha_id, nombre_cliente, telefono_cliente,
+    email_cliente || null, fecha, hora_inicio, hora_fin, montoTotal,
+    metodo_pago || null, notas || null
+  ).run();
+
+  // 11. Leer la reserva insertada para devolver creado_en
+  const reservaCreada = await env.DB.prepare(
+    "SELECT id, cancha_id, fecha, hora_inicio, hora_fin, nombre_cliente, telefono_cliente, email_cliente, estado, monto_total, metodo_pago, notas, creado_en FROM reservas WHERE id = ?"
+  ).bind(reservaId).first();
+
+  return jsonResponse({ reserva: reservaCreada }, 201);
+}
+
+function generarIdReserva() {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  return `res_${hex}`;
 }
 
 // ============================================
