@@ -108,6 +108,22 @@ async function manejarApi(request, env, tenant, pathname) {
     return crearReserva(request, env, tenant);
   }
 
+  // POST /api/canchas
+  if (pathname === "/api/canchas" && request.method === "POST") {
+    return crearCancha(request, env, tenant);
+  }
+
+  // PATCH /api/canchas/:id/toggle
+  const matchCanchaToggle = pathname.match(/^\/api\/canchas\/([a-zA-Z0-9_-]+)\/toggle$/);
+  if (matchCanchaToggle && request.method === "PATCH") {
+    return toggleCancha(request, env, tenant, matchCanchaToggle[1]);
+  }
+
+  // PUT /api/canchas/:id
+  if (matchCanchaId && request.method === "PUT") {
+    return editarCancha(request, env, tenant, matchCanchaId[1]);
+  }
+
   return jsonResponse({ error: "Ruta de API no encontrada" }, 404);
 }
 
@@ -137,6 +153,149 @@ async function obtenerCancha(env, tenant, canchaId) {
   }
 
   return jsonResponse({ cancha });
+}
+
+async function crearCancha(request, env, tenant) {
+  const authError = await asegurarAdmin(request, env, tenant);
+  if (authError) return authError;
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Body JSON inválido" }, 400);
+  }
+
+  const { nombre, tipo, precio_hora } = body || {};
+  const faltantes = [];
+  if (!nombre) faltantes.push("nombre");
+  if (!tipo) faltantes.push("tipo");
+  if (precio_hora === undefined || precio_hora === null || isNaN(Number(precio_hora))) {
+    faltantes.push("precio_hora");
+  }
+
+  if (faltantes.length > 0) {
+    return jsonResponse({ error: `Campos requeridos faltantes o inválidos: ${faltantes.join(", ")}` }, 400);
+  }
+
+  const id = generarIdCancha();
+  const techada = body.techada ? 1 : 0;
+  const precioHoraNum = Number(precio_hora);
+
+  await env.DB.prepare(
+    `INSERT INTO canchas (
+      id, tenant_id, nombre, tipo, categoria, numero, descripcion,
+      precio_hora, superficie, techada, capacidad, medidas, iluminacion, imagen_url, activa
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`
+  ).bind(
+    id,
+    tenant.id,
+    nombre,
+    tipo,
+    body.categoria || null,
+    body.numero !== undefined && body.numero !== null && !isNaN(Number(body.numero)) ? Number(body.numero) : null,
+    body.descripcion || null,
+    precioHoraNum,
+    body.superficie || null,
+    techada,
+    body.capacidad || null,
+    body.medidas || null,
+    body.iluminacion || null,
+    body.imagen_url || null
+  ).run();
+
+  const cancha = await env.DB.prepare(
+    `SELECT id, nombre, tipo, categoria, numero, descripcion, precio_hora, imagen_url,
+            superficie, techada, capacidad, medidas, iluminacion, activa
+     FROM canchas WHERE id = ? AND tenant_id = ?`
+  ).bind(id, tenant.id).first();
+
+  return jsonResponse({ cancha }, 201);
+}
+
+async function editarCancha(request, env, tenant, canchaId) {
+  const authError = await asegurarAdmin(request, env, tenant);
+  if (authError) return authError;
+
+  const existe = await env.DB.prepare(
+    "SELECT id FROM canchas WHERE id = ? AND tenant_id = ?"
+  ).bind(canchaId, tenant.id).first();
+
+  if (!existe) {
+    return jsonResponse({ error: "Cancha no encontrada" }, 404);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Body JSON inválido" }, 400);
+  }
+
+  if (!body || typeof body !== "object") {
+    return jsonResponse({ error: "Body JSON inválido" }, 400);
+  }
+
+  // Whitelist fija de columnas actualizables
+  const COLUMNAS_PERMITIDAS = [
+    "nombre", "tipo", "categoria", "numero", "descripcion",
+    "precio_hora", "superficie", "techada", "capacidad", "medidas",
+    "iluminacion", "imagen_url"
+  ];
+
+  const setClauses = [];
+  const values = [];
+
+  for (const col of COLUMNAS_PERMITIDAS) {
+    if (body[col] !== undefined) {
+      setClauses.push(`${col} = ?`);
+      if (col === "techada") {
+        values.push(body.techada ? 1 : 0);
+      } else if (col === "precio_hora") {
+        values.push(Number(body.precio_hora));
+      } else if (col === "numero") {
+        values.push(body.numero !== null && !isNaN(Number(body.numero)) ? Number(body.numero) : null);
+      } else {
+        values.push(body[col]);
+      }
+    }
+  }
+
+  if (setClauses.length > 0) {
+    values.push(canchaId, tenant.id);
+    await env.DB.prepare(
+      `UPDATE canchas SET ${setClauses.join(", ")} WHERE id = ? AND tenant_id = ?`
+    ).bind(...values).run();
+  }
+
+  const cancha = await env.DB.prepare(
+    `SELECT id, nombre, tipo, categoria, numero, descripcion, precio_hora, imagen_url,
+            superficie, techada, capacidad, medidas, iluminacion, activa
+     FROM canchas WHERE id = ? AND tenant_id = ?`
+  ).bind(canchaId, tenant.id).first();
+
+  return jsonResponse({ cancha }, 200);
+}
+
+async function toggleCancha(request, env, tenant, canchaId) {
+  const authError = await asegurarAdmin(request, env, tenant);
+  if (authError) return authError;
+
+  const cancha = await env.DB.prepare(
+    "SELECT id, activa FROM canchas WHERE id = ? AND tenant_id = ?"
+  ).bind(canchaId, tenant.id).first();
+
+  if (!cancha) {
+    return jsonResponse({ error: "Cancha no encontrada" }, 404);
+  }
+
+  const nuevoValor = cancha.activa === 1 ? 0 : 1;
+
+  await env.DB.prepare(
+    "UPDATE canchas SET activa = ? WHERE id = ? AND tenant_id = ?"
+  ).bind(nuevoValor, canchaId, tenant.id).run();
+
+  return jsonResponse({ id: canchaId, activa: nuevoValor }, 200);
 }
 
 async function obtenerDisponibilidad(env, tenant, canchaId, fecha) {
@@ -291,6 +450,13 @@ function generarIdReserva() {
   return `res_${hex}`;
 }
 
+function generarIdCancha() {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  return `cancha_${hex}`;
+}
+
 // ============================================
 // Utilidades
 // ============================================
@@ -417,6 +583,14 @@ async function requireAuth(request, env, tenant) {
   if (!payload) return false;
   if (payload.tenant_id !== tenant.id) return false;
   return true;
+}
+
+async function asegurarAdmin(request, env, tenant) {
+  const autorizado = await requireAuth(request, env, tenant);
+  if (!autorizado) {
+    return jsonResponse({ error: "No autorizado" }, 401);
+  }
+  return null;
 }
 
 // ============================================
