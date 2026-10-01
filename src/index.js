@@ -124,6 +124,17 @@ async function manejarApi(request, env, tenant, pathname) {
     return editarCancha(request, env, tenant, matchCanchaId[1]);
   }
 
+  // POST /api/bloqueos
+  if (pathname === "/api/bloqueos" && request.method === "POST") {
+    return crearBloqueo(request, env, tenant);
+  }
+
+  // DELETE /api/bloqueos/:id
+  const matchBloqueoId = pathname.match(/^\/api\/bloqueos\/([a-zA-Z0-9_-]+)$/);
+  if (matchBloqueoId && request.method === "DELETE") {
+    return eliminarBloqueo(request, env, tenant, matchBloqueoId[1]);
+  }
+
   return jsonResponse({ error: "Ruta de API no encontrada" }, 404);
 }
 
@@ -298,6 +309,105 @@ async function toggleCancha(request, env, tenant, canchaId) {
   return jsonResponse({ id: canchaId, activa: nuevoValor }, 200);
 }
 
+async function crearBloqueo(request, env, tenant) {
+  const authError = await asegurarAdmin(request, env, tenant);
+  if (authError) return authError;
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Body JSON inválido" }, 400);
+  }
+
+  const { cancha_id, fecha, horarios, motivo, nota } = body || {};
+
+  const faltantes = [];
+  if (!cancha_id) faltantes.push("cancha_id");
+  if (!fecha) faltantes.push("fecha");
+  if (!horarios) faltantes.push("horarios");
+  if (!motivo) faltantes.push("motivo");
+
+  if (faltantes.length > 0) {
+    return jsonResponse({ error: `Campos requeridos faltantes: ${faltantes.join(", ")}` }, 400);
+  }
+
+  // Validar formato fecha (YYYY-MM-DD)
+  const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!fechaRegex.test(fecha)) {
+    return jsonResponse({ error: "Formato de fecha inválido, usar YYYY-MM-DD" }, 400);
+  }
+
+  // Validar horarios: array no vacío
+  if (!Array.isArray(horarios) || horarios.length === 0) {
+    return jsonResponse({ error: "El campo horarios debe ser un array no vacío" }, 400);
+  }
+
+  // Validar formato y rango de cada hora en horarios (HH:MM con HH entre 00 y 23, MM entre 00 y 59)
+  const horaRegex = /^\d{2}:\d{2}$/;
+  for (const h of horarios) {
+    if (typeof h !== "string" || !horaRegex.test(h)) {
+      return jsonResponse({ error: `Horario inválido: ${h}` }, 400);
+    }
+    const [hh, mm] = h.split(":").map(Number);
+    if (hh < 0 || hh > 23 || mm < 0 || mm > 59) {
+      return jsonResponse({ error: `Horario inválido: ${h}` }, 400);
+    }
+  }
+
+  // Validar que la cancha pertenezca al tenant actual
+  const cancha = await env.DB.prepare(
+    "SELECT id FROM canchas WHERE id = ? AND tenant_id = ?"
+  ).bind(cancha_id, tenant.id).first();
+
+  if (!cancha) {
+    return jsonResponse({ error: "Cancha no encontrada" }, 404);
+  }
+
+  const id = generarIdBloqueo();
+  const horariosJson = JSON.stringify(horarios);
+
+  await env.DB.prepare(
+    `INSERT INTO bloqueos (id, tenant_id, cancha_id, fecha, horarios, motivo, nota)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).bind(id, tenant.id, cancha_id, fecha, horariosJson, motivo, nota || null).run();
+
+  const bloqueo = await env.DB.prepare(
+    "SELECT id, cancha_id, fecha, horarios, motivo, nota, creado_en FROM bloqueos WHERE id = ?"
+  ).bind(id).first();
+
+  let horariosParsed = horarios;
+  try {
+    horariosParsed = JSON.parse(bloqueo.horarios);
+  } catch {}
+
+  return jsonResponse({
+    bloqueo: {
+      ...bloqueo,
+      horarios: horariosParsed
+    }
+  }, 201);
+}
+
+async function eliminarBloqueo(request, env, tenant, bloqueoId) {
+  const authError = await asegurarAdmin(request, env, tenant);
+  if (authError) return authError;
+
+  const bloqueo = await env.DB.prepare(
+    "SELECT id FROM bloqueos WHERE id = ? AND tenant_id = ?"
+  ).bind(bloqueoId, tenant.id).first();
+
+  if (!bloqueo) {
+    return jsonResponse({ error: "Bloqueo no encontrado" }, 404);
+  }
+
+  await env.DB.prepare(
+    "DELETE FROM bloqueos WHERE id = ? AND tenant_id = ?"
+  ).bind(bloqueoId, tenant.id).run();
+
+  return jsonResponse({ id: bloqueoId, eliminado: true }, 200);
+}
+
 async function obtenerDisponibilidad(env, tenant, canchaId, fecha) {
   if (!canchaId || !fecha) {
     return jsonResponse({ error: "Faltan parametros: cancha_id y fecha son requeridos" }, 400);
@@ -455,6 +565,13 @@ function generarIdCancha() {
   crypto.getRandomValues(bytes);
   const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
   return `cancha_${hex}`;
+}
+
+function generarIdBloqueo() {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  return `bloqueo_${hex}`;
 }
 
 // ============================================
