@@ -97,7 +97,11 @@ la Fase 7:
       inexistente, y la prueba end-to-end clave: un bloqueo creado acá
       efectivamente hace que POST /api/reservas (Fase 5) lo rechace
       con 409, y al borrarlo la reserva vuelve a aceptarse (201).
-- [ ] PATCH estado de reserva
+- [x] GET /api/reservas (listado con JOIN a canchas, filtro de rango de
+      fechas) y PATCH estado, con auth gate. Probado: 401 sin sesión,
+      JOIN trayendo cancha_nombre, filtro de fechas, validación de
+      desde > hasta (400), estado inválido (400), reserva inexistente
+      (404).
 - [ ] Endpoint de reportes (KPIs, ocupación, ingresos)
 - [ ] Reemplazar localStorage por fetch real en admin-datos.js
 
