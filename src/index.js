@@ -103,6 +103,17 @@ async function manejarApi(request, env, tenant, pathname) {
     return logoutAdmin();
   }
 
+  // GET /api/reservas
+  if (pathname === "/api/reservas" && request.method === "GET") {
+    return listarReservasAdmin(request, env, tenant);
+  }
+
+  // PATCH /api/reservas/:id/estado
+  const matchReservaEstado = pathname.match(/^\/api\/reservas\/([a-zA-Z0-9_-]+)\/estado$/);
+  if (matchReservaEstado && request.method === "PATCH") {
+    return cambiarEstadoReserva(request, env, tenant, matchReservaEstado[1]);
+  }
+
   // POST /api/reservas
   if (pathname === "/api/reservas" && request.method === "POST") {
     return crearReserva(request, env, tenant);
@@ -551,6 +562,95 @@ async function crearReserva(request, env, tenant) {
   ).bind(reservaId).first();
 
   return jsonResponse({ reserva: reservaCreada }, 201);
+}
+
+async function listarReservasAdmin(request, env, tenant) {
+  const authError = await asegurarAdmin(request, env, tenant);
+  if (authError) return authError;
+
+  const url = new URL(request.url);
+  const desde = url.searchParams.get("desde");
+  const hasta = url.searchParams.get("hasta");
+  const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+  if (desde && !fechaRegex.test(desde)) {
+    return jsonResponse({ error: "Formato de fecha 'desde' inválido, usar YYYY-MM-DD" }, 400);
+  }
+  if (hasta && !fechaRegex.test(hasta)) {
+    return jsonResponse({ error: "Formato de fecha 'hasta' inválido, usar YYYY-MM-DD" }, 400);
+  }
+  if (desde && hasta && desde > hasta) {
+    return jsonResponse({ error: "'desde' debe ser menor o igual a 'hasta'" }, 400);
+  }
+
+  let query = `
+    SELECT r.id, r.tenant_id, r.cancha_id, r.nombre_cliente, r.telefono_cliente,
+           r.email_cliente, r.fecha, r.hora_inicio, r.hora_fin, r.estado,
+           r.monto_total, r.pago_id, r.metodo_pago, r.notas, r.creado_en,
+           c.nombre AS cancha_nombre
+    FROM reservas r
+    LEFT JOIN canchas c ON r.cancha_id = c.id
+    WHERE r.tenant_id = ?
+  `;
+  const params = [tenant.id];
+
+  if (desde) {
+    query += " AND r.fecha >= ?";
+    params.push(desde);
+  }
+  if (hasta) {
+    query += " AND r.fecha <= ?";
+    params.push(hasta);
+  }
+
+  query += " ORDER BY r.fecha ASC, r.hora_inicio ASC";
+
+  const { results } = await env.DB.prepare(query).bind(...params).all();
+
+  return jsonResponse({ reservas: results });
+}
+
+async function cambiarEstadoReserva(request, env, tenant, reservaId) {
+  const authError = await asegurarAdmin(request, env, tenant);
+  if (authError) return authError;
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Body JSON inválido" }, 400);
+  }
+
+  const { estado } = body || {};
+  const ESTADOS_PERMITIDOS = ["pendiente", "confirmada", "cancelada"];
+
+  if (!estado || !ESTADOS_PERMITIDOS.includes(estado)) {
+    return jsonResponse({ error: "El estado debe ser 'pendiente', 'confirmada' o 'cancelada'" }, 400);
+  }
+
+  const reserva = await env.DB.prepare(
+    "SELECT id FROM reservas WHERE id = ? AND tenant_id = ?"
+  ).bind(reservaId, tenant.id).first();
+
+  if (!reserva) {
+    return jsonResponse({ error: "Reserva no encontrada" }, 404);
+  }
+
+  await env.DB.prepare(
+    "UPDATE reservas SET estado = ? WHERE id = ? AND tenant_id = ?"
+  ).bind(estado, reservaId, tenant.id).run();
+
+  const reservaActualizada = await env.DB.prepare(
+    `SELECT r.id, r.tenant_id, r.cancha_id, r.nombre_cliente, r.telefono_cliente,
+            r.email_cliente, r.fecha, r.hora_inicio, r.hora_fin, r.estado,
+            r.monto_total, r.pago_id, r.metodo_pago, r.notas, r.creado_en,
+            c.nombre AS cancha_nombre
+     FROM reservas r
+     LEFT JOIN canchas c ON r.cancha_id = c.id
+     WHERE r.id = ? AND r.tenant_id = ?`
+  ).bind(reservaId, tenant.id).first();
+
+  return jsonResponse({ reserva: reservaActualizada }, 200);
 }
 
 function generarIdReserva() {
