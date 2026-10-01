@@ -91,7 +91,12 @@ la Fase 7:
       (asegurarAdmin + requireAuth). Probado: 401 sin sesión, 201/200
       con sesión, whitelist de columnas verificada contra inyección
       de tenant_id/activa, coerción de techada a 0/1 verificada.
-- [ ] CRUD de bloqueos (POST/DELETE) contra D1
+- [x] CRUD de bloqueos (POST/DELETE) contra D1, con auth gate.
+      Probado: 401 sin sesión, 201 con horarios como array real,
+      validación de rango horario (HH 00-23, MM 00-59), 404 cancha
+      inexistente, y la prueba end-to-end clave: un bloqueo creado acá
+      efectivamente hace que POST /api/reservas (Fase 5) lo rechace
+      con 409, y al borrarlo la reserva vuelve a aceptarse (201).
 - [ ] PATCH estado de reserva
 - [ ] Endpoint de reportes (KPIs, ocupación, ingresos)
 - [ ] Reemplazar localStorage por fetch real en admin-datos.js
