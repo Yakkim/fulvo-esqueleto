@@ -395,7 +395,7 @@ async function crearBloqueo(request, env, tenant) {
   let horariosParsed = horarios;
   try {
     horariosParsed = JSON.parse(bloqueo.horarios);
-  } catch {}
+  } catch { }
 
   return jsonResponse({
     bloqueo: {
@@ -438,15 +438,29 @@ async function obtenerDisponibilidad(env, tenant, canchaId, fecha) {
     return jsonResponse({ error: "Cancha no encontrada" }, 404);
   }
 
-  // Traer las reservas confirmadas/pendientes de ese dia
-  const { results } = await env.DB.prepare(
-    `SELECT hora_inicio, hora_fin FROM reservas
-     WHERE cancha_id = ? AND tenant_id = ? AND fecha = ? AND estado != 'cancelada'`
-  ).bind(canchaId, tenant.id, fecha).all();
+  // Reservas y bloqueos del día en un solo viaje a D1
+  const [reservasRes, bloqueosRes] = await env.DB.batch([
+    env.DB.prepare(
+      `SELECT hora_inicio, hora_fin FROM reservas
+       WHERE cancha_id = ? AND tenant_id = ? AND fecha = ? AND estado != 'cancelada'`
+    ).bind(canchaId, tenant.id, fecha),
+    env.DB.prepare(
+      "SELECT horarios FROM bloqueos WHERE tenant_id = ? AND cancha_id = ? AND fecha = ?"
+    ).bind(tenant.id, canchaId, fecha)
+  ]);
 
-  // Generar franjas horarias del dia (09:00 a 23:00, cada 1 hora) y marcar ocupadas
   const franjas = generarFranjas("09:00", "23:00", 60);
-  const ocupadas = new Set(results.map(r => r.hora_inicio));
+  const ocupadas = new Set(reservasRes.results.map(r => r.hora_inicio));
+
+  // Sumar las horas bloqueadas desde el admin
+  for (const bloqueo of bloqueosRes.results) {
+    try {
+      const horas = JSON.parse(bloqueo.horarios);
+      if (Array.isArray(horas)) horas.forEach(h => ocupadas.add(h));
+    } catch (e) {
+      console.error("Bloqueo con horarios inválidos:", e);
+    }
+  }
 
   const disponibilidad = franjas.map(hora => ({
     hora,
@@ -455,6 +469,7 @@ async function obtenerDisponibilidad(env, tenant, canchaId, fecha) {
 
   return jsonResponse({ cancha_id: canchaId, fecha, disponibilidad });
 }
+
 
 // ============================================
 // Helper de verificación Cloudflare Turnstile
@@ -524,14 +539,14 @@ async function crearReserva(request, env, tenant) {
 
   // 2. Validar campos requeridos
   const { cancha_id, fecha, hora_inicio, hora_fin, nombre_cliente, telefono_cliente,
-          email_cliente, metodo_pago, notas } = body || {};
+    email_cliente, metodo_pago, notas } = body || {};
 
   const faltantes = [];
-  if (!cancha_id)        faltantes.push("cancha_id");
-  if (!fecha)            faltantes.push("fecha");
-  if (!hora_inicio)      faltantes.push("hora_inicio");
-  if (!hora_fin)         faltantes.push("hora_fin");
-  if (!nombre_cliente)   faltantes.push("nombre_cliente");
+  if (!cancha_id) faltantes.push("cancha_id");
+  if (!fecha) faltantes.push("fecha");
+  if (!hora_inicio) faltantes.push("hora_inicio");
+  if (!hora_fin) faltantes.push("hora_fin");
+  if (!nombre_cliente) faltantes.push("nombre_cliente");
   if (!telefono_cliente) faltantes.push("telefono_cliente");
 
   if (faltantes.length > 0) {

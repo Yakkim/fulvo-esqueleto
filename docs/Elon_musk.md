@@ -74,3 +74,8 @@ Historial de cambios realizados en el proyecto durante mis sesiones de trabajo e
   - Validación sintáctica del script con `node --check public/js/reserva.js`.
   - Comprobación de la lógica de guards (`turnstileInicializado`, `turnstileInicializando`, `turnstileWidgetId`) que impiden renders duplicados tanto en estado de espera activa como tras la instanciación del widget.
 
+## 2026-10-01 — Bloqueos del admin reflejados en la disponibilidad pública
+- Archivos: src/index.js
+- Cambio: obtenerDisponibilidad ahora consulta también la tabla bloqueos (en un solo batch con las reservas) y marca esas horas como no disponibles. No expone el motivo.
+- Por qué: el tablero mostraba LIBRE un horario bloqueado y el cliente recién se enteraba con un 409 al confirmar.
+- Verificación: bloqueo creado por POST /api/bloqueos aparece como disponible=false; reservar esa hora da 409; tras el DELETE vuelve a true.
