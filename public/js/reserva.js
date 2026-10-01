@@ -31,20 +31,18 @@ let turnstileSiteKey = null;
 let turnstileWidgetId = null;
 let turnstileToken = null;
 let turnstileInicializado = false;
+let turnstileInicializando = false;
 
 /**
- * Espera a que el script de Turnstile esté cargado y listo en window
+ * Espera a que el script de Turnstile esté disponible en window (máximo ~5 segundos)
  */
-async function esperarTurnstile(maxEsperaMs = 6000) {
+async function esperarTurnstile(maxEsperaMs = 5000) {
   const inicio = Date.now();
-  while (typeof window.turnstile === 'undefined') {
+  while (typeof window.turnstile === 'undefined' || typeof window.turnstile.render !== 'function') {
     if (Date.now() - inicio > maxEsperaMs) {
       return false;
     }
     await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  if (typeof window.turnstile.ready === 'function') {
-    await new Promise(resolve => window.turnstile.ready(resolve));
   }
   return true;
 }
@@ -53,40 +51,42 @@ async function esperarTurnstile(maxEsperaMs = 6000) {
  * Inicializa el widget de Turnstile en el Paso 3
  */
 async function inicializarTurnstilePaso3() {
-  if (turnstileInicializado || turnstileWidgetId !== null) {
+  if (turnstileInicializado || turnstileInicializando || turnstileWidgetId !== null) {
     return;
   }
-  turnstileInicializado = true;
-
-  if (!turnstileSiteKey) {
-    try {
-      const res = await fetch('/api/config');
-      if (res.ok) {
-        const cfg = await res.json();
-        turnstileSiteKey = cfg.turnstile_site_key;
-      }
-    } catch (err) {
-      console.error('Error al obtener /api/config para Turnstile:', err);
-    }
-  }
-
-  if (!turnstileSiteKey) {
-    turnstileInicializado = false;
-    mostrarAlertaPaso('No pudimos cargar la verificación, recargá la página');
-    return;
-  }
-
-  const turnstileListo = await esperarTurnstile(6000);
-  if (!turnstileListo || !window.turnstile) {
-    turnstileInicializado = false;
-    mostrarAlertaPaso('No pudimos cargar la verificación, recargá la página');
-    return;
-  }
-
-  const container = document.getElementById('turnstile-container');
-  if (!container) return;
+  turnstileInicializando = true;
 
   try {
+    if (!turnstileSiteKey) {
+      try {
+        const res = await fetch('/api/config');
+        if (res.ok) {
+          const cfg = await res.json();
+          turnstileSiteKey = cfg.turnstile_site_key;
+        }
+      } catch (err) {
+        console.error('Error al obtener /api/config para Turnstile:', err);
+      }
+    }
+
+    if (!turnstileSiteKey) {
+      mostrarAlertaPaso('No pudimos cargar la verificación, recargá la página');
+      return;
+    }
+
+    const turnstileListo = await esperarTurnstile(5000);
+    if (!turnstileListo || !window.turnstile || typeof window.turnstile.render !== 'function') {
+      mostrarAlertaPaso('No pudimos cargar la verificación, recargá la página');
+      return;
+    }
+
+    const container = document.getElementById('turnstile-container');
+    if (!container) return;
+
+    if (turnstileWidgetId !== null) {
+      return;
+    }
+
     turnstileWidgetId = window.turnstile.render('#turnstile-container', {
       sitekey: turnstileSiteKey,
       theme: 'dark',
@@ -100,10 +100,13 @@ async function inicializarTurnstilePaso3() {
         turnstileToken = null;
       }
     });
+
+    turnstileInicializado = true;
   } catch (err) {
     console.error('Error al renderizar Turnstile:', err);
-    turnstileInicializado = false;
     mostrarAlertaPaso('No pudimos cargar la verificación, recargá la página');
+  } finally {
+    turnstileInicializando = false;
   }
 }
 

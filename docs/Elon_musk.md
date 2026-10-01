@@ -53,3 +53,24 @@ Historial de cambios realizados en el proyecto durante mis sesiones de trabajo e
   4. Petición con secret inválido (`2x...`): Rechazada con HTTP 403 y mensaje de error al fallar la validación.
   5. Petición con secret de token gastado (`3x...`): Rechazada con HTTP 403 y mensaje de error al simular token consumido.
   6. Integridad en D1: Se constató mediante `SELECT COUNT(*) FROM reservas;` que el conteo inicial fue 0 y el final fue 1 (únicamente la reserva del control positivo), demostrando que ninguna solicitud rechazada insertó registros en la base.
+
+### 2026-10-01: Corrección de carga de Turnstile (eliminación de `turnstile.ready()` y sondeo directo)
+
+- **Archivos tocados:**
+  - [public/js/reserva.js](file:///c:/Users/joaqu/OneDrive/Desktop/fulvo/public/js/reserva.js)
+  - [docs/Elon_musk.md](file:///c:/Users/joaqu/OneDrive/Desktop/fulvo/docs/Elon_musk.md)
+
+- **Qué se cambió:**
+  - Se eliminó por completo el uso de `window.turnstile.ready()` en `esperarTurnstile()`.
+  - Se implementó sondeo asíncrono seguro (polling cada 100 ms hasta 5 segundos) verificando la presencia de `window.turnstile` y `window.turnstile.render`.
+  - Se añadió la bandera de estado `turnstileInicializando` para blindar el flujo contra doble render o ejecuciones paralelas de inicialización si el usuario navega entre pasos durante el sondeo.
+  - Al completar la verificación de disponibilidad o ante timeout/error, `turnstileInicializando` se libera en el bloque `finally`.
+  - Invocación directa a `window.turnstile.render('#turnstile-container', ...)` sin intermediación de `ready()`.
+
+- **Por qué:**
+  - Al cargar `api.js` con los atributos `async` y `defer`, la librería oficial de Cloudflare Turnstile prohíbe el uso de `turnstile.ready()` y arroja `TurnstileError: Remove async/defer from the Turnstile api.js script tag before using turnstile.ready()`, impidiendo que se ejecute `turnstile.render()` y dejando vacío el contenedor `#turnstile-container` en el navegador.
+
+- **Cómo se verificó:**
+  - Validación sintáctica del script con `node --check public/js/reserva.js`.
+  - Comprobación de la lógica de guards (`turnstileInicializado`, `turnstileInicializando`, `turnstileWidgetId`) que impiden renders duplicados tanto en estado de espera activa como tras la instanciación del widget.
+
